@@ -52,4 +52,32 @@
       }
       
       Object.values(data).forEach(p => {
-        const bubble = document.createElement
+        const bubble = document.createElement('div')
+        bubble.className = 'flex justify-end'
+        bubble.innerHTML = `
+          <div class="bg-green-500 text-white px-4 py-2 rounded-2xl rounded-br-none max-w-[70%] shadow">
+            ${p.isi}
+            <div class="text-[10px] opacity-70 text-right mt-1">${new Date(p.waktu).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})}</div>
+          </div>`
+        chatBox.appendChild(bubble)
+      })
+      chatBox.scrollTop = chatBox.scrollHeight
+    })
+    
+    // KIRIM PESAN
+    async function kirimPesan() {
+      const input = document.getElementById('pesanInput')
+      const text = input.value.trim()
+      if(text === '') return
+      
+      await push(pesanRef, { pengirim: 'Aku', isi: text, waktu: Date.now() })
+      input.value = ''
+    }
+    
+    document.getElementById('btnKirim').onclick = kirimPesan
+    document.getElementById('pesanInput').addEventListener('keypress', e => {
+      if(e.key === 'Enter') kirimPesan()
+    })
+  </script>
+</body>
+</html>
