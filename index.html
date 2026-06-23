@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WA KW Kita</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 h-screen flex-col">
+
+  <!-- Header ijo ala WA -->
+  <div class="bg-green-600 text-white p-4 shadow">
+    <h1 class="text-xl font-bold">Chat Pribadi</h1>
+  </div>
+
+  <!-- Area chat -->
+  <div id="chatBox" class="flex-1 p-4 overflow-y-auto space-y-3">
+    <div class="text-center text-gray-400 text-sm">Selamat datang sayang 💚</div>
+  </div>
+
+  <!-- Input bawah -->
+  <div class="p-3 bg-white flex gap-2 border-t">
+    <input id="pesanInput" type="text" placeholder="Ketik pesan..." 
+      class="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+    <button onclick="kirimPesan()" 
+      class="bg-green-600 text-white rounded-full px-5 py-2 font-bold">
+      Kirim
+    </button>
+  </div>
+
+  <script>
+    function kirimPesan() {
+      const input = document.getElementById('pesanInput');
+      const chatBox = document.getElementById('chatBox');
+      const teks = input.value.trim();
+      
+      if(teks === '') return; // kalo kosong ya jangan dikirim
+
+      // bikin bubble chat kanan warna ijo
+      const bubble = document.createElement('div');
+      bubble.className = 'flex justify-end';
+      bubble.innerHTML = `
+        <div class="bg-green-500 text-white px-4 py-2 rounded-2xl rounded-br-none max-w-[70%]">
+          ${teks}
+        </div>
+      `;
+      
+      chatBox.appendChild(bubble);
+      input.value = ''; // kosongin input
+      chatBox.scrollTop = chatBox.scrollHeight; // auto scroll ke bawah
+    }
+
+    // biar bisa pencet Enter buat ngirim
+    document.getElementById('pesanInput').addEventListener('keypress', function(e) {
+      if(e.key === 'Enter') kirimPesan();
+    });
+  </script>
+
+</body>
+</html>
