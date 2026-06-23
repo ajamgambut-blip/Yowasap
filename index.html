@@ -1,196 +1,90 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>WA KW</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WA KW Kita</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- PAKE UNPKG + GLOBAL. INI PALING AMAN -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
 </head>
+<body class="bg-gray-100 h-screen flex-col">
 
-<body class="h-screen flex flex-col bg-gray-100">
-
-<!-- HEADER -->
-<div class="bg-green-600 text-white p-4 shadow">
-  <h1 class="font-bold text-lg">WA KW</h1>
-  <p id="namaUser" class="text-sm opacity-80"></p>
-</div>
-
-<!-- CHAT -->
-<div id="chatBox" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
-  <div class="text-center text-gray-400">
-    Memuat pesan...
+  <div class="bg-green-600 text-white p-4">
+    <h1 class="text-xl font-bold">Chat Pribadi</h1>
   </div>
-</div>
 
-<!-- INPUT -->
-<div class="bg-white border-t p-3 flex gap-2">
-  <input
-    id="pesanInput"
-    type="text"
-    placeholder="Ketik pesan..."
-    class="flex-1 border rounded-full px-4 py-2 outline-none"
-  >
-  <button
-    id="btnKirim"
-    class="bg-green-600 text-white px-5 rounded-full"
-  >
-    Kirim
-  </button>
-</div>
+  <div id="chatBox" class="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-50">
+    <div class="text-center text-gray-400 text-sm">Loading chat...</div>
+  </div>
 
-<script>
-const SUPABASE_URL = https://kdxqnlsbmpvnfokpr.supabase.co;
-const SUPABASE_KEY = sb_publishable__0CXL3iCW4_pV8fB08rCWw_xk28fRVV;
+  <div class="p-3 bg-white flex gap-2 border-t">
+    <input id="pesanInput" type="text" placeholder="Ketik pesan..." 
+      class="flex-1 border rounded-full px-4 py-2">
+    <button id="btnKirim" class="bg-green-600 text-white rounded-full px-5 py-2 font-bold">
+      Kirim
+    </button>
+  </div>
 
-const supabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
-
-let userName = localStorage.getItem("wa_nama");
-
-if (!userName) {
-  userName = prompt("Masukkan nama kamu:");
-
-  if (!userName || userName.trim() === "") {
-    userName = "User" + Math.floor(Math.random() * 1000);
-  }
-
-  localStorage.setItem("wa_nama", userName);
-}
-
-document.getElementById("namaUser").textContent =
-  "Halo, " + userName;
-
-const chatBox = document.getElementById("chatBox");
-
-function formatJam(tanggal) {
-  return new Date(tanggal).toLocaleTimeString("id-ID", {
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-}
-
-function scrollBawah() {
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
-
-function renderPesan(pesan) {
-
-  const isMe = pesan.pengirim === userName;
-
-  const wrapper = document.createElement("div");
-  wrapper.className = isMe
-    ? "flex justify-end"
-    : "flex justify-start";
-
-  const bubble = document.createElement("div");
-  bubble.className = isMe
-    ? "bg-green-500 text-white rounded-2xl rounded-br-none px-4 py-2 max-w-[75%]"
-    : "bg-white rounded-2xl rounded-bl-none px-4 py-2 max-w-[75%] shadow";
-
-  const nama = document.createElement("div");
-  nama.className = "text-xs font-bold mb-1";
-  nama.textContent = pesan.pengirim;
-
-  const isi = document.createElement("div");
-  isi.textContent = pesan.isi;
-
-  const waktu = document.createElement("div");
-  waktu.className = "text-[10px] opacity-70 text-right mt-1";
-  waktu.textContent = formatJam(pesan.dibuat_pada);
-
-  bubble.appendChild(nama);
-  bubble.appendChild(isi);
-  bubble.appendChild(waktu);
-
-  wrapper.appendChild(bubble);
-
-  chatBox.appendChild(wrapper);
-}
-
-async function loadChat() {
-
-  const { data, error } = await supabase
-    .from("pesan")
-    .select("*")
-    .order("dibuat_pada", {
-      ascending: true
-    });
-
-  if (error) {
-    chatBox.innerHTML =
-      "<div class='text-red-500'>" +
-      error.message +
-      "</div>";
-    return;
-  }
-
-  chatBox.innerHTML = "";
-
-  data.forEach(renderPesan);
-
-  scrollBawah();
-}
-
-async function kirimPesan() {
-
-  const input = document.getElementById("pesanInput");
-
-  const text = input.value.trim();
-
-  if (!text) return;
-
-  input.value = "";
-
-  const { error } = await supabase
-    .from("pesan")
-    .insert([
-      {
-        pengirim: userName,
-        isi: text
+  <script>
+    // TUNGGU SUPABASE KE-LOAD DULU
+    window.addEventListener('load', async () => {
+      
+      // GANTI 2 BARIS INI PAKE PUNYA KAMU
+      const SUPABASE_URL = 'https://kdxqnlsbmpvnfokpr.supabase.co'
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkeHFubHFsc2JtcHZuZm9rcnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMTEyMTAsImV4cCI6MjA5Nzc4NzIxMH0.oR1FPVubwV3P_tY26tLICuoB8JZhRlsAYpyhkDPpiuM'
+      
+      // INI KUNCI: Supabase udah jadi global variable
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+      
+      async function loadPesan() {
+        const { data, error } = await supabase.from('pesan').select('*').order('dibuat_pada', { ascending: true })
+        
+        const chatBox = document.getElementById('chatBox')
+        if(error) { 
+          chatBox.innerHTML = `<div class="text-red-500 text-center">Error: ${error.message}</div>`
+          return 
+        }
+        
+        chatBox.innerHTML = ''
+        if(data.length === 0) {
+          chatBox.innerHTML = `<div class="text-center text-gray-400 text-sm">Belum ada pesan. Kirim yang pertama!</div>`
+          return
+        }
+        
+        data.forEach(p => {
+          const bubble = document.createElement('div')
+          bubble.className = 'flex justify-end'
+          bubble.innerHTML = `<div class="bg-green-500 text-white px-4 py-2 rounded-2xl rounded-br-none max-w-[70%]">${p.isi}</div>`
+          chatBox.appendChild(bubble)
+        })
+        chatBox.scrollTop = chatBox.scrollHeight
       }
-    ]);
-
-  if (error) {
-    alert("Gagal: " + error.message);
-  }
-}
-
-document
-  .getElementById("btnKirim")
-  .addEventListener("click", kirimPesan);
-
-document
-  .getElementById("pesanInput")
-  .addEventListener("keypress", (e) => {
-    if (e.key === "Enter") {
-      kirimPesan();
-    }
-  });
-
-loadChat();
-
-supabase
-  .channel("chat-room")
-  .on(
-    "postgres_changes",
-    {
-      event: "INSERT",
-      schema: "public",
-      table: "pesan"
-    },
-    (payload) => {
-      renderPesan(payload.new);
-      scrollBawah();
-    }
-  )
-  .subscribe();
-
-</script>
-
+      
+      async function kirimPesan() {
+        const input = document.getElementById('pesanInput')
+        const text = input.value.trim()
+        if(text === '') return
+        
+        const { error } = await supabase.from('pesan').insert([{ pengirim: 'Aku', isi: text }])
+        
+        if(error) {
+          alert('GAGAL KIRIM: ' + error.message)
+        } else {
+          input.value = ''
+          loadPesan()
+        }
+      }
+      
+      document.getElementById('btnKirim').onclick = kirimPesan
+      document.getElementById('pesanInput').onkeypress = e => {
+        if(e.key === 'Enter') kirimPesan()
+      }
+      
+      loadPesan()
+      setInterval(loadPesan, 3000)
+    })
+  </script>
 </body>
 </html>
