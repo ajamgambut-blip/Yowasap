@@ -13,7 +13,7 @@
   </div>
 
   <div id="chatBox" class="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-50">
-    <div class="text-center text-gray-400 text-sm">Selamat datang sayang 💚</div>
+    <div class="text-center text-gray-400 text-sm">Loading chat...</div>
   </div>
 
   <div class="p-3 bg-white flex gap-2 border-t shrink-0">
@@ -26,49 +26,59 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    alert('1. Script kebaca!') 
+    
     const SUPABASE_URL = 'https://kdxqnlsbmpvnfokpr.supabase.co'
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkeHFubHFsc2JtcHZuZm9rcnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMTEyMTAsImV4cCI6MjA5Nzc4NzIxMH0.oR1FPVubwV3P_tY26tLICuoB8JZhRlsAYpyhkDPpiuM'
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
-
-    async function kirimPesan() {
-      const input = document.getElementById('pesanInput')
-      const text = input.value.trim()
-      if(text === '') return
-
-      const { error } = await supabase.from('pesan').insert([{ pengirim: 'Aku', isi: text }])
-
-      if(error) {
-        alert('ERROR: ' + error.message)
-      } else {
-        input.value = ''
-        loadPesan()
-      }
-    }
-
-    async function loadPesan() {
-      const { data, error } = await supabase.from('pesan').select('*').order('dibuat_pada', { ascending: true })
-      if(error) { 
-        console.log(error)
-        return 
+    
+    try {
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+      alert('2. Supabase nyambung!')
+      
+      async function loadPesan() {
+        alert('3. Mau ngambil data...')
+        const { data, error } = await supabase.from('pesan').select('*').order('dibuat_pada', { ascending: true })
+        
+        if(error) { 
+          alert('ERROR LOAD: ' + error.message)
+          return 
+        }
+        
+        alert('4. Data ketemu: ' + data.length + ' pesan')
+        const chatBox = document.getElementById('chatBox')
+        chatBox.innerHTML = ''
+        
+        data.forEach(p => {
+          const bubble = document.createElement('div')
+          bubble.className = 'flex justify-end'
+          bubble.innerHTML = `<div class="bg-green-500 text-white px-4 py-2 rounded-2xl rounded-br-none max-w-[70%] shadow">${p.isi}</div>`
+          chatBox.appendChild(bubble)
+        })
       }
       
-      const chatBox = document.getElementById('chatBox')
-      chatBox.innerHTML = '<div class="text-center text-gray-400 text-sm">Selamat datang sayang 💚</div>'
+      async function kirimPesan() {
+        const input = document.getElementById('pesanInput')
+        const text = input.value.trim()
+        if(text === '') return
+        
+        alert('5. Mau kirim ke Supabase...')
+        const { error } = await supabase.from('pesan').insert([{ pengirim: 'Aku', isi: text }])
+        
+        if(error) {
+          alert('ERROR KIRIM: ' + error.message)
+        } else {
+          alert('6. Terkirim! Refresh...')
+          input.value = ''
+          loadPesan()
+        }
+      }
       
-      data.forEach(p => {
-        const bubble = document.createElement('div')
-        bubble.className = 'flex justify-end'
-        bubble.innerHTML = `<div class="bg-green-500 text-white px-4 py-2 rounded-2xl rounded-br-none max-w-[70%] shadow">${p.isi}</div>`
-        chatBox.appendChild(bubble)
-      })
-      chatBox.scrollTop = chatBox.scrollHeight
+      document.getElementById('btnKirim').addEventListener('click', kirimPesan)
+      loadPesan()
+      
+    } catch(e) {
+      alert('ERROR FATAL: ' + e.message)
     }
-
-    document.getElementById('btnKirim').addEventListener('click', kirimPesan)
-    document.getElementById('pesanInput').addEventListener('keypress', function(e) {
-      if(e.key === 'Enter') kirimPesan()
-    })
-    loadPesan()
   </script>
 </body>
 </html>
