@@ -9,21 +9,20 @@
 <body class="bg-gray-100 h-screen flex-col">
 
   <!-- Header ijo ala WA -->
-  <div class="bg-green-600 text-white p-4 shadow">
+  <div class="bg-green-600 text-white p-4 shadow shrink-0">
     <h1 class="text-xl font-bold">Chat Pribadi</h1>
   </div>
 
   <!-- Area chat -->
-  <div id="chatBox" class="flex-1 p-4 overflow-y-auto space-y-3">
+  <div id="chatBox" class="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-50">
     <div class="text-center text-gray-400 text-sm">Selamat datang sayang 💚</div>
   </div>
 
   <!-- Input bawah -->
-  <div class="p-3 bg-white flex gap-2 border-t">
+  <div class="p-3 bg-white flex gap-2 border-t shrink-0">
     <input id="pesanInput" type="text" placeholder="Ketik pesan..." 
       class="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
-    <button onclick="kirimPesan()" 
-      class="bg-green-600 text-white rounded-full px-5 py-2 font-bold">
+    <button id="btnKirim" class="bg-green-600 text-white rounded-full px-5 py-2 font-bold">
       Kirim
     </button>
   </div>
@@ -33,35 +32,52 @@
 
   <!-- MESIN CHAT + DATABASE -->
   <script>
-    // 1. COLOK KUNCINYA
+    console.log('Script mulai jalan...')
+
+    // 1. COLOK KUNCINYA - GANTI KALO PUNYA KAMU BEDA
     const SUPABASE_URL = 'https://kdxqnlsbmpvnfokpr.supabase.co'
     const SUPABASE_KEY = 'sb_publishable__0CXL3iCW4_pV8fB08r-CWw_xk28fRVV'
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+    console.log('Supabase nyambung:', supabase)
 
     // 2. KIRIM PESAN KE DATABASE
     async function kirimPesan() {
+      console.log('Tombol kepencet!')
       const input = document.getElementById('pesanInput')
       const text = input.value.trim()
-      if(text === '') return
+      console.log('Isi pesan:', text)
+      
+      if(text === '') {
+        console.log('Kosong, batal kirim')
+        return
+      }
 
       const { error } = await supabase
         .from('pesan')
         .insert([{ pengirim: 'Aku', isi: text }])
 
       if(error) {
+        console.error('ERROR SUPABASE:', error)
         alert('Gagal kirim: ' + error.message)
       } else {
+        console.log('Sukses kirim!')
         input.value = ''
-        loadPesan() // refresh chat
+        loadPesan()
       }
     }
 
     // 3. LOAD PESAN DARI DATABASE + BIKIN BUBBLE IJO
     async function loadPesan() {
+      console.log('Load pesan...')
       const { data, error } = await supabase
         .from('pesan')
         .select('*')
         .order('dibuat_pada', { ascending: true })
+
+      if(error) {
+        console.error('ERROR LOAD:', error)
+        return
+      }
 
       const chatBox = document.getElementById('chatBox')
       chatBox.innerHTML = '<div class="text-center text-gray-400 text-sm">Selamat datang sayang 💚</div>'
@@ -70,22 +86,24 @@
         const bubble = document.createElement('div')
         bubble.className = 'flex justify-end'
         bubble.innerHTML = `
-          <div class="bg-green-500 text-white px-4 py-2 rounded-2xl rounded-br-none max-w-[70%]">
+          <div class="bg-green-500 text-white px-4 py-2 rounded-2xl rounded-br-none max-w-[70%] shadow">
             ${p.isi}
           </div>
         `
         chatBox.appendChild(bubble)
       })
-      chatBox.scrollTop = chatBox.scrollHeight // auto scroll
+      chatBox.scrollTop = chatBox.scrollHeight
+      console.log('Load selesai, total:', data.length)
     }
 
-    // 4. LOAD PESAN PAS BUKA HALAMAN
-    loadPesan()
-
-    // 5. ENTER BUAT NGIRIM
+    // 4. NYAMBUNGIN TOMBOL + ENTER - INI KUNCI ANTI GAGAL
+    document.getElementById('btnKirim').addEventListener('click', kirimPesan)
     document.getElementById('pesanInput').addEventListener('keypress', function(e) {
       if(e.key === 'Enter') kirimPesan()
     })
+
+    // 5. LOAD PESAN PAS BUKA HALAMAN
+    loadPesan()
   </script>
   
 </body>
