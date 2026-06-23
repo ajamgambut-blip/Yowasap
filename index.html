@@ -77,7 +77,13 @@
 
     const app = initializeApp(firebaseConfig)
     const db = getDatabase(app)
-    const pesanRef = ref(db, 'pesan')
+    const roomId = "AYANG2026LOVE"
+const pesanRef = ref(db, `rooms/${roomId}/pesan`)
+    const kode = prompt("Masukkan kode pasangan")
+
+if (kode !== "AYANG2026LOVE") {
+  document.body.innerHTML = "Akses ditolak"
+}
 
     const namaInput = document.getElementById('namaInput')
     const myName = () => namaInput.value.trim() || 'Aku'
