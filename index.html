@@ -28,33 +28,65 @@
     </button>
   </div>
 
-  <script>
-    function kirimPesan() {
-      const input = document.getElementById('pesanInput');
-      const chatBox = document.getElementById('chatBox');
-      const teks = input.value.trim();
-      
-      if(teks === '') return; // kalo kosong ya jangan dikirim
+  <!-- KABEL INTERNET SUPABASE -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-      // bikin bubble chat kanan warna ijo
-      const bubble = document.createElement('div');
-      bubble.className = 'flex justify-end';
-      bubble.innerHTML = `
-        <div class="bg-green-500 text-white px-4 py-2 rounded-2xl rounded-br-none max-w-[70%]">
-          ${teks}
-        </div>
-      `;
-      
-      chatBox.appendChild(bubble);
-      input.value = ''; // kosongin input
-      chatBox.scrollTop = chatBox.scrollHeight; // auto scroll ke bawah
+  <!-- MESIN CHAT + DATABASE -->
+  <script>
+    // 1. COLOK KUNCINYA
+    const SUPABASE_URL = 'https://kdxqnlsbmpvnfokpr.supabase.co'
+    const SUPABASE_KEY = 'sb_publishable__0CXL3iCW4_pV8fB08r-CWw_xk28fRVV'
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+
+    // 2. KIRIM PESAN KE DATABASE
+    async function kirimPesan() {
+      const input = document.getElementById('pesanInput')
+      const text = input.value.trim()
+      if(text === '') return
+
+      const { error } = await supabase
+        .from('pesan')
+        .insert([{ pengirim: 'Aku', isi: text }])
+
+      if(error) {
+        alert('Gagal kirim: ' + error.message)
+      } else {
+        input.value = ''
+        loadPesan() // refresh chat
+      }
     }
 
-    // biar bisa pencet Enter buat ngirim
-    document.getElementById('pesanInput').addEventListener('keypress', function(e) {
-      if(e.key === 'Enter') kirimPesan();
-    });
-  </script>
+    // 3. LOAD PESAN DARI DATABASE + BIKIN BUBBLE IJO
+    async function loadPesan() {
+      const { data, error } = await supabase
+        .from('pesan')
+        .select('*')
+        .order('dibuat_pada', { ascending: true })
 
+      const chatBox = document.getElementById('chatBox')
+      chatBox.innerHTML = '<div class="text-center text-gray-400 text-sm">Selamat datang sayang 💚</div>'
+      
+      data.forEach(p => {
+        const bubble = document.createElement('div')
+        bubble.className = 'flex justify-end'
+        bubble.innerHTML = `
+          <div class="bg-green-500 text-white px-4 py-2 rounded-2xl rounded-br-none max-w-[70%]">
+            ${p.isi}
+          </div>
+        `
+        chatBox.appendChild(bubble)
+      })
+      chatBox.scrollTop = chatBox.scrollHeight // auto scroll
+    }
+
+    // 4. LOAD PESAN PAS BUKA HALAMAN
+    loadPesan()
+
+    // 5. ENTER BUAT NGIRIM
+    document.getElementById('pesanInput').addEventListener('keypress', function(e) {
+      if(e.key === 'Enter') kirimPesan()
+    })
+  </script>
+  
 </body>
 </html>
