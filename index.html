@@ -6,14 +6,8 @@
   <title>WA KW Kita</title>
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- IMPORT MAP BIKIN SUPABASE ANTI GAGAL -->
-  <script type="importmap">
-  {
-    "imports": {
-      "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
-    }
-  }
-  </script>
+  <!-- PAKE UNPKG + GLOBAL. INI PALING AMAN -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
 </head>
 <body class="bg-gray-100 h-screen flex-col">
 
@@ -33,61 +27,64 @@
     </button>
   </div>
 
-  <script type="module">
-    import { createClient } from '@supabase/supabase-js'
-    
-    // GANTI 2 BARIS INI PAKE PUNYA KAMU SAYANG
-    const SUPABASE_URL = 'https://kdxqnlsbmpvnfokpr.supabase.co'
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkeHFubHFsc2JtcHZuZm9rcnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMTEyMTAsImV4cCI6MjA5Nzc4NzIxMH0.oR1FPVubwV3P_tY26tLICuoB8JZhRlsAYpyhkDPpiuM'
-    
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
-    
-    async function loadPesan() {
-      const { data, error } = await supabase.from('pesan').select('*').order('dibuat_pada', { ascending: true })
+  <script>
+    // TUNGGU SUPABASE KE-LOAD DULU
+    window.addEventListener('load', async () => {
       
-      const chatBox = document.getElementById('chatBox')
-      if(error) { 
-        chatBox.innerHTML = `<div class="text-red-500 text-center">Error Supabase: ${error.message}</div>`
-        return 
+      // GANTI 2 BARIS INI PAKE PUNYA KAMU
+      const SUPABASE_URL = 'https://kdxqnlsbmpvnfokpr.supabase.co'
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkeHFubHFsc2JtcHZuZm9rcnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMTEyMTAsImV4cCI6MjA5Nzc4NzIxMH0.oR1FPVubwV3P_tY26tLICuoB8JZhRlsAYpyhkDPpiuM'
+      
+      // INI KUNCI: Supabase udah jadi global variable
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+      
+      async function loadPesan() {
+        const { data, error } = await supabase.from('pesan').select('*').order('dibuat_pada', { ascending: true })
+        
+        const chatBox = document.getElementById('chatBox')
+        if(error) { 
+          chatBox.innerHTML = `<div class="text-red-500 text-center">Error: ${error.message}</div>`
+          return 
+        }
+        
+        chatBox.innerHTML = ''
+        if(data.length === 0) {
+          chatBox.innerHTML = `<div class="text-center text-gray-400 text-sm">Belum ada pesan. Kirim yang pertama!</div>`
+          return
+        }
+        
+        data.forEach(p => {
+          const bubble = document.createElement('div')
+          bubble.className = 'flex justify-end'
+          bubble.innerHTML = `<div class="bg-green-500 text-white px-4 py-2 rounded-2xl rounded-br-none max-w-[70%]">${p.isi}</div>`
+          chatBox.appendChild(bubble)
+        })
+        chatBox.scrollTop = chatBox.scrollHeight
       }
       
-      chatBox.innerHTML = ''
-      if(data.length === 0) {
-        chatBox.innerHTML = `<div class="text-center text-gray-400 text-sm">Belum ada pesan. Kirim yang pertama!</div>`
-        return
+      async function kirimPesan() {
+        const input = document.getElementById('pesanInput')
+        const text = input.value.trim()
+        if(text === '') return
+        
+        const { error } = await supabase.from('pesan').insert([{ pengirim: 'Aku', isi: text }])
+        
+        if(error) {
+          alert('GAGAL KIRIM: ' + error.message)
+        } else {
+          input.value = ''
+          loadPesan()
+        }
       }
       
-      data.forEach(p => {
-        const bubble = document.createElement('div')
-        bubble.className = 'flex justify-end'
-        bubble.innerHTML = `<div class="bg-green-500 text-white px-4 py-2 rounded-2xl rounded-br-none max-w-[70%]">${p.isi}</div>`
-        chatBox.appendChild(bubble)
-      })
-      chatBox.scrollTop = chatBox.scrollHeight
-    }
-    
-    async function kirimPesan() {
-      const input = document.getElementById('pesanInput')
-      const text = input.value.trim()
-      if(text === '') return
-      
-      const { error } = await supabase.from('pesan').insert([{ pengirim: 'Aku', isi: text }])
-      
-      if(error) {
-        alert('GAGAL KIRIM: ' + error.message)
-      } else {
-        input.value = ''
-        loadPesan()
+      document.getElementById('btnKirim').onclick = kirimPesan
+      document.getElementById('pesanInput').onkeypress = e => {
+        if(e.key === 'Enter') kirimPesan()
       }
-    }
-    
-    document.getElementById('btnKirim').onclick = kirimPesan
-    document.getElementById('pesanInput').onkeypress = e => {
-      if(e.key === 'Enter') kirimPesan()
-    }
-    
-    loadPesan()
-    setInterval(loadPesan, 3000)
+      
+      loadPesan()
+      setInterval(loadPesan, 3000)
+    })
   </script>
 </body>
 </html>
