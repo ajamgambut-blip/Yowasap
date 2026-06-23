@@ -1,348 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>Yowasap MVP</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:sans-serif;
-}
-
-body{
-background:#0b141a;
-color:white;
-height:100vh;
-display:flex;
-flex-direction:column;
-}
-
-header{
-background:#202c33;
-padding:15px;
-font-size:20px;
-font-weight:bold;
-}
-
-#auth{
-padding:20px;
-}
-
-input{
-width:100%;
-padding:12px;
-margin-bottom:10px;
-border:none;
-border-radius:10px;
-}
-
-button{
-width:100%;
-padding:12px;
-border:none;
-border-radius:10px;
-background:#25D366;
-font-weight:bold;
-margin-bottom:10px;
-}
-
-#app{
-display:none;
-height:100vh;
-flex-direction:column;
-}
-
-#users{
-height:150px;
-overflow:auto;
-background:#111b21;
-padding:10px;
-}
-
-.user{
-padding:12px;
-background:#202c33;
-margin-bottom:8px;
-border-radius:10px;
-}
-
-#messages{
-flex:1;
-overflow:auto;
-padding:10px;
-display:flex;
-flex-direction:column;
-background:#0b141a;
-}
-
-.me{
-align-self:flex-end;
-background:#25D366;
-color:black;
-padding:10px;
-border-radius:10px;
-margin:5px;
-max-width:70%;
-}
-
-.other{
-align-self:flex-start;
-background:#202c33;
-padding:10px;
-border-radius:10px;
-margin:5px;
-max-width:70%;
-}
-
-#send{
-display:flex;
-padding:10px;
-background:#202c33;
-}
-
-#msg{
-flex:1;
-margin-right:10px;
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yowasap - WA KW Kita</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-
-<body>
-
-<div id="auth">
-
-<h2>Yowasap</h2>
-
-<br>
-
-<input id="email" placeholder="Email">
-
-<input id="password" type="password" placeholder="Password">
-
-<input id="username" placeholder="Username">
-
-<button onclick="register()">Daftar</button>
-
-<button onclick="login()">Login</button>
-
-</div>
-
-<div id="app">
-
-<header id="title">
-Pilih Teman
-</header>
-
-<div id="users"></div>
-
-<div id="messages"></div>
-
-<div id="send">
-
-<input id="msg" placeholder="Ketik pesan">
-
-<button onclick="sendMessage()">
-Kirim
-</button>
-
-</div>
-
-</div>
-
-<script>
-
-const supabase = window.supabase.createClient(
-"https://kdxqnlsbmpvnfokpr.supabase.co",
-"sb_publishable__0CXL3iCW4_pV8fB08rCWw_xk28fRVV"
-);
-
-let currentUser = null;
-let selectedUser = null;
-
-async function register(){
-
-const email =
-document.getElementById("email").value;
-
-const password =
-document.getElementById("password").value;
-
-const username =
-document.getElementById("username").value;
-
-const { data, error } =
-await supabase.auth.signUp({
-email,
-password
-});
-
-if(error){
-alert(error.message);
-return;
-}
-
-await supabase
-.from("profiles")
-.insert({
-id:data.user.id,
-username
-});
-
-alert("Pendaftaran berhasil");
-}
-
-async function login(){
-
-const email =
-document.getElementById("email").value;
-
-const password =
-document.getElementById("password").value;
-
-const { data, error } =
-await supabase.auth.signInWithPassword({
-email,
-password
-});
-
-if(error){
-alert(error.message);
-return;
-}
-
-currentUser = data.user;
-
-document.getElementById("auth").style.display="none";
-document.getElementById("app").style.display="flex";
-
-loadUsers();
-}
-
-async function loadUsers(){
-
-const { data } =
-await supabase
-.from("profiles")
-.select("*");
-
-const box =
-document.getElementById("users");
-
-box.innerHTML="";
-
-data.forEach(user=>{
-
-if(user.id===currentUser.id) return;
-
-box.innerHTML += `
-<div class="user"
-onclick="openChat('${user.id}','${user.username}')">
-${user.username}
-</div>
-`;
-
-});
-}
-
-async function openChat(id,name){
-
-selectedUser=id;
-
-document.getElementById("title").innerText=name;
-
-loadMessages();
-}
-
-async function loadMessages(){
-
-if(!selectedUser) return;
-
-const { data } =
-await supabase
-.from("messages")
-.select("*")
-.order("created_at");
-
-const box =
-document.getElementById("messages");
-
-box.innerHTML="";
-
-data.forEach(msg=>{
-
-const related =
-
-(msg.sender_id===currentUser.id &&
-msg.receiver_id===selectedUser)
-
-||
-
-(msg.sender_id===selectedUser &&
-msg.receiver_id===currentUser.id);
-
-if(!related) return;
-
-box.innerHTML += `
-<div class="${
-msg.sender_id===currentUser.id
-? "me"
-: "other"
-}">
-${msg.message}
-</div>
-`;
-
-});
-
-box.scrollTop=box.scrollHeight;
-}
-
-async function sendMessage(){
-
-if(!selectedUser){
-alert("Pilih teman dulu");
-return;
-}
-
-const text =
-document.getElementById("msg").value;
-
-if(!text) return;
-
-await supabase
-.from("messages")
-.insert({
-sender_id:currentUser.id,
-receiver_id:selectedUser,
-message:text
-});
-
-document.getElementById("msg").value="";
-}
-
-supabase
-.channel("chat")
-.on(
-"postgres_changes",
-{
-event:"*",
-schema:"public",
-table:"messages"
-},
-()=>{
-loadMessages();
-}
-)
-.subscribe();
-
-</script>
-
-</body>
-</html>
+<body class="bg-gray-100 h-screen flex-col">
+  
+  <div class="bg-green-600 text-white p-4 shadow-lg">
+    <h1 class="text-xl font-bold">💬 Yowasap</h1>
+    <p class="text-xs opacity-80">Realtime Chat</p>
+  </div>
+
+  <div id="chatBox" class="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-50">
+    <div class="text-center text-gray-400 text-sm">Loading chat...</div>
+  </div>
+
+  <div class="p-3 bg-white flex gap-2 border-t shadow-inner">
+    <input id="pesanInput" type="text" placeholder="Ketik pesan..." class="flex-1 border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:border-green-500">
+    <button id="btnKirim" class="bg-green-600 hover:bg-green-700 text-white rounded-full px-5 py-2 font-bold transition">Kirim</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js'
+    import { getDatabase, ref, push, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js'
+    
+    const firebaseConfig = {
+      apiKey: "AIzaSyCZHdGHSMBT8g8xs2H78yhDx0dbEv2H0xg",
+      authDomain: "yowasap.firebaseapp.com",
+      databaseURL: "https://yowasap-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "yowasap",
+      storageBucket: "yowasap.firebasestorage.app",
+      messagingSenderId: "964491262310",
+      appId: "1:964491262310:web:086e5f2cbf0af8398870a7"
+    }
+    
+    const app = initializeApp(firebaseConfig)
+    const db = getDatabase(app)
+    const pesanRef = ref(db, 'pesan')
+    
+    // LOAD + AUTO UPDATE REALTIME
+    onValue(pesanRef, (snapshot) => {
+      const chatBox = document.getElementById('chatBox')
+      chatBox.innerHTML = ''
+      const data = snapshot.val()
+      
+      if(!data) {
+        chatBox.innerHTML = `<div class="text-center text-gray-400 text-sm mt-10">Belum ada pesan. Kirim yang pertama! 👋</div>`
+        return
+      }
+      
+      Object.values(data).forEach(p => {
+        const bubble = document.createElement
