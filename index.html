@@ -17,42 +17,44 @@
   </div>
 
   <div class="p-3 bg-white flex gap-2 border-t shadow-inner">
-    <input id="pesanInput" type="text" placeholder="Ketik pesan..." class="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
-    <button id="btnKirim" class="bg-green-600 text-white rounded-full px-5 py-2 font-bold active:bg-green-700">Kirim</button>
+    <input id="pesanInput" type="text" placeholder="Ketik pesan..." class="flex-1 border rounded-full px-4 py-2">
+    <button id="btnKirim" class="bg-green-600 text-white rounded-full px-5 py-2 font-bold">Kirim</button>
   </div>
 
-  <!-- JURUS ESM.SH - NGGAK PAKE FILE LUAR -->
-  <script type="module">
-    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
-    
-    // GANTI 2 BARIS INI PUNYA KAMU
+  <script>
+    // KODE SUPABASE MINI - FETCH MANUAL NGGAK PAKE LIBRARY
     const SUPABASE_URL = 'https://kdxqnlsbmpvnfokpr.supabase.co'
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkeHFubHFsc2JtcHZuZm9rcnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMTEyMTAsImV4cCI6MjA5Nzc4NzIxMH0.oR1FPVubwV3P_tY26tLICuoB8JZhRlsAYpyhkDPpiuM'
     
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
-    
     async function loadPesan() {
-      const { data, error } = await supabase.from('pesan').select('*').order('dibuat_pada', { ascending: true })
       const chatBox = document.getElementById('chatBox')
-      
-      if(error) { 
-        chatBox.innerHTML = `<div class="text-red-500 text-center text-sm">Error DB: ${error.message}</div>`; 
-        return 
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/pesan?select=*&order=dibuat_pada.asc`, {
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY
+          }
+        })
+        if(!res.ok) throw new Error('HTTP ' + res.status)
+        const data = await res.json()
+        
+        if(data.length === 0) {
+          chatBox.innerHTML = `<div class="text-center text-gray-400 text-sm">Belum ada pesan</div>`
+          return
+        }
+        
+        chatBox.innerHTML = ''
+        data.forEach(p => {
+          const bubble = document.createElement('div')
+          bubble.className = 'flex justify-end'
+          bubble.innerHTML = `<div class="bg-green-500 text-white px-4 py-2 rounded-2xl rounded-br-none max-w-[70%]">${p.isi}</div>`
+          chatBox.appendChild(bubble)
+        })
+        chatBox.scrollTop = chatBox.scrollHeight
+        
+      } catch(err) {
+        chatBox.innerHTML = `<div class="text-red-500 text-center text-sm">Error DB: ${err.message}</div>`
       }
-      
-      if(data.length === 0) {
-        chatBox.innerHTML = `<div class="text-center text-gray-400 text-sm">Belum ada pesan. Sapa duluan!</div>`
-        return
-      }
-      
-      chatBox.innerHTML = ''
-      data.forEach(p => {
-        const bubble = document.createElement('div')
-        bubble.className = 'flex justify-end'
-        bubble.innerHTML = `<div class="bg-green-500 text-white px-4 py-2 rounded-2xl rounded-br-none max-w-[70%] break-words">${p.isi}</div>`
-        chatBox.appendChild(bubble)
-      })
-      chatBox.scrollTop = chatBox.scrollHeight
     }
     
     async function kirimPesan() {
@@ -60,13 +62,24 @@
       const text = input.value.trim()
       if(text === '') return
       
-      const { error } = await supabase.from('pesan').insert([{ pengirim: 'Aku', isi: text }])
-      
-      if(error) {
-        alert('GAGAL KIRIM: ' + error.message)
-      } else {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/pesan`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({ pengirim: 'Aku', isi: text })
+        })
+        
+        if(!res.ok) throw new Error('HTTP ' + res.status)
         input.value = ''
         loadPesan()
+        
+      } catch(err) {
+        alert('GAGAL KIRIM: ' + err.message)
       }
     }
     
