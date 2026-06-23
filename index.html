@@ -1,95 +1,348 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WA KW Kita</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Yowasap MVP</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:sans-serif;
+}
+
+body{
+background:#0b141a;
+color:white;
+height:100vh;
+display:flex;
+flex-direction:column;
+}
+
+header{
+background:#202c33;
+padding:15px;
+font-size:20px;
+font-weight:bold;
+}
+
+#auth{
+padding:20px;
+}
+
+input{
+width:100%;
+padding:12px;
+margin-bottom:10px;
+border:none;
+border-radius:10px;
+}
+
+button{
+width:100%;
+padding:12px;
+border:none;
+border-radius:10px;
+background:#25D366;
+font-weight:bold;
+margin-bottom:10px;
+}
+
+#app{
+display:none;
+height:100vh;
+flex-direction:column;
+}
+
+#users{
+height:150px;
+overflow:auto;
+background:#111b21;
+padding:10px;
+}
+
+.user{
+padding:12px;
+background:#202c33;
+margin-bottom:8px;
+border-radius:10px;
+}
+
+#messages{
+flex:1;
+overflow:auto;
+padding:10px;
+display:flex;
+flex-direction:column;
+background:#0b141a;
+}
+
+.me{
+align-self:flex-end;
+background:#25D366;
+color:black;
+padding:10px;
+border-radius:10px;
+margin:5px;
+max-width:70%;
+}
+
+.other{
+align-self:flex-start;
+background:#202c33;
+padding:10px;
+border-radius:10px;
+margin:5px;
+max-width:70%;
+}
+
+#send{
+display:flex;
+padding:10px;
+background:#202c33;
+}
+
+#msg{
+flex:1;
+margin-right:10px;
+}
+</style>
 </head>
-<body class="bg-gray-100 h-screen flex-col">
-  
-  <div class="bg-green-600 text-white p-4 shadow">
-    <h1 class="text-xl font-bold">Chat Pribadi</h1>
-  </div>
 
-  <div id="chatBox" class="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-50">
-    <div class="text-center text-gray-400 text-sm">Loading chat...</div>
-  </div>
+<body>
 
-  <div class="p-3 bg-white flex gap-2 border-t shadow-inner">
-    <input id="pesanInput" type="text" placeholder="Ketik pesan..." class="flex-1 border rounded-full px-4 py-2">
-    <button id="btnKirim" class="bg-green-600 text-white rounded-full px-5 py-2 font-bold">Kirim</button>
-  </div>
+<div id="auth">
 
-  <script>
-    // KODE SUPABASE MINI - FETCH MANUAL NGGAK PAKE LIBRARY
-    const SUPABASE_URL = 'https://kdxqnlsbmpvnfokpr.supabase.co'
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkeHFubHFsc2JtcHZuZm9rcnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMTEyMTAsImV4cCI6MjA5Nzc4NzIxMH0.oR1FPVubwV3P_tY26tLICuoB8JZhRlsAYpyhkDPpiuM'
-    
-    async function loadPesan() {
-      const chatBox = document.getElementById('chatBox')
-      try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/pesan?select=*&order=dibuat_pada.asc`, {
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': 'Bearer ' + SUPABASE_KEY
-          }
-        })
-        if(!res.ok) throw new Error('HTTP ' + res.status)
-        const data = await res.json()
-        
-        if(data.length === 0) {
-          chatBox.innerHTML = `<div class="text-center text-gray-400 text-sm">Belum ada pesan</div>`
-          return
-        }
-        
-        chatBox.innerHTML = ''
-        data.forEach(p => {
-          const bubble = document.createElement('div')
-          bubble.className = 'flex justify-end'
-          bubble.innerHTML = `<div class="bg-green-500 text-white px-4 py-2 rounded-2xl rounded-br-none max-w-[70%]">${p.isi}</div>`
-          chatBox.appendChild(bubble)
-        })
-        chatBox.scrollTop = chatBox.scrollHeight
-        
-      } catch(err) {
-        chatBox.innerHTML = `<div class="text-red-500 text-center text-sm">Error DB: ${err.message}</div>`
-      }
-    }
-    
-    async function kirimPesan() {
-      const input = document.getElementById('pesanInput')
-      const text = input.value.trim()
-      if(text === '') return
-      
-      try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/pesan`, {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': 'Bearer ' + SUPABASE_KEY,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({ pengirim: 'Aku', isi: text })
-        })
-        
-        if(!res.ok) throw new Error('HTTP ' + res.status)
-        input.value = ''
-        loadPesan()
-        
-      } catch(err) {
-        alert('GAGAL KIRIM: ' + err.message)
-      }
-    }
-    
-    document.getElementById('btnKirim').onclick = kirimPesan
-    document.getElementById('pesanInput').addEventListener('keypress', e => {
-      if(e.key === 'Enter') kirimPesan()
-    })
-    
-    loadPesan()
-    setInterval(loadPesan, 3000)
-  </script>
+<h2>Yowasap</h2>
+
+<br>
+
+<input id="email" placeholder="Email">
+
+<input id="password" type="password" placeholder="Password">
+
+<input id="username" placeholder="Username">
+
+<button onclick="register()">Daftar</button>
+
+<button onclick="login()">Login</button>
+
+</div>
+
+<div id="app">
+
+<header id="title">
+Pilih Teman
+</header>
+
+<div id="users"></div>
+
+<div id="messages"></div>
+
+<div id="send">
+
+<input id="msg" placeholder="Ketik pesan">
+
+<button onclick="sendMessage()">
+Kirim
+</button>
+
+</div>
+
+</div>
+
+<script>
+
+const supabase = window.supabase.createClient(
+"https://kdxqnlsbmpvnfokpr.supabase.co",
+"sb_publishable__0CXL3iCW4_pV8fB08rCWw_xk28fRVV"
+);
+
+let currentUser = null;
+let selectedUser = null;
+
+async function register(){
+
+const email =
+document.getElementById("email").value;
+
+const password =
+document.getElementById("password").value;
+
+const username =
+document.getElementById("username").value;
+
+const { data, error } =
+await supabase.auth.signUp({
+email,
+password
+});
+
+if(error){
+alert(error.message);
+return;
+}
+
+await supabase
+.from("profiles")
+.insert({
+id:data.user.id,
+username
+});
+
+alert("Pendaftaran berhasil");
+}
+
+async function login(){
+
+const email =
+document.getElementById("email").value;
+
+const password =
+document.getElementById("password").value;
+
+const { data, error } =
+await supabase.auth.signInWithPassword({
+email,
+password
+});
+
+if(error){
+alert(error.message);
+return;
+}
+
+currentUser = data.user;
+
+document.getElementById("auth").style.display="none";
+document.getElementById("app").style.display="flex";
+
+loadUsers();
+}
+
+async function loadUsers(){
+
+const { data } =
+await supabase
+.from("profiles")
+.select("*");
+
+const box =
+document.getElementById("users");
+
+box.innerHTML="";
+
+data.forEach(user=>{
+
+if(user.id===currentUser.id) return;
+
+box.innerHTML += `
+<div class="user"
+onclick="openChat('${user.id}','${user.username}')">
+${user.username}
+</div>
+`;
+
+});
+}
+
+async function openChat(id,name){
+
+selectedUser=id;
+
+document.getElementById("title").innerText=name;
+
+loadMessages();
+}
+
+async function loadMessages(){
+
+if(!selectedUser) return;
+
+const { data } =
+await supabase
+.from("messages")
+.select("*")
+.order("created_at");
+
+const box =
+document.getElementById("messages");
+
+box.innerHTML="";
+
+data.forEach(msg=>{
+
+const related =
+
+(msg.sender_id===currentUser.id &&
+msg.receiver_id===selectedUser)
+
+||
+
+(msg.sender_id===selectedUser &&
+msg.receiver_id===currentUser.id);
+
+if(!related) return;
+
+box.innerHTML += `
+<div class="${
+msg.sender_id===currentUser.id
+? "me"
+: "other"
+}">
+${msg.message}
+</div>
+`;
+
+});
+
+box.scrollTop=box.scrollHeight;
+}
+
+async function sendMessage(){
+
+if(!selectedUser){
+alert("Pilih teman dulu");
+return;
+}
+
+const text =
+document.getElementById("msg").value;
+
+if(!text) return;
+
+await supabase
+.from("messages")
+.insert({
+sender_id:currentUser.id,
+receiver_id:selectedUser,
+message:text
+});
+
+document.getElementById("msg").value="";
+}
+
+supabase
+.channel("chat")
+.on(
+"postgres_changes",
+{
+event:"*",
+schema:"public",
+table:"messages"
+},
+()=>{
+loadMessages();
+}
+)
+.subscribe();
+
+</script>
+
 </body>
 </html>
