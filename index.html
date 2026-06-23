@@ -32,35 +32,24 @@
 
   <!-- MESIN CHAT + DATABASE -->
   <script>
-    console.log('Script mulai jalan...')
-
-    // 1. COLOK KUNCINYA - GANTI KALO PUNYA KAMU BEDA
+    // 1. COLOK KUNCINYA - UDAH AKU GANTI PAKE PUNYA KAMU
     const SUPABASE_URL = 'https://kdxqnlsbmpvnfokpr.supabase.co'
-    const SUPABASE_KEY = 'sb_publishable__0CXL3iCW4_pV8fB08r-CWw_xk28fRVV'
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkeHFubHFsc2JtcHZuZm9rcnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMTEyMTAsImV4cCI6MjA5Nzc4NzIxMH0.oR1FPVubwV3P_tY26tLICuoB8JZhRlsAYpyhkDPpiuM'
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
-    console.log('Supabase nyambung:', supabase)
 
     // 2. KIRIM PESAN KE DATABASE
     async function kirimPesan() {
-      console.log('Tombol kepencet!')
       const input = document.getElementById('pesanInput')
       const text = input.value.trim()
-      console.log('Isi pesan:', text)
-      
-      if(text === '') {
-        console.log('Kosong, batal kirim')
-        return
-      }
+      if(text === '') return
 
       const { error } = await supabase
         .from('pesan')
         .insert([{ pengirim: 'Aku', isi: text }])
 
       if(error) {
-        console.error('ERROR SUPABASE:', error)
         alert('Gagal kirim: ' + error.message)
       } else {
-        console.log('Sukses kirim!')
         input.value = ''
         loadPesan()
       }
@@ -68,16 +57,12 @@
 
     // 3. LOAD PESAN DARI DATABASE + BIKIN BUBBLE IJO
     async function loadPesan() {
-      console.log('Load pesan...')
       const { data, error } = await supabase
         .from('pesan')
         .select('*')
         .order('dibuat_pada', { ascending: true })
 
-      if(error) {
-        console.error('ERROR LOAD:', error)
-        return
-      }
+      if(error) return
 
       const chatBox = document.getElementById('chatBox')
       chatBox.innerHTML = '<div class="text-center text-gray-400 text-sm">Selamat datang sayang 💚</div>'
@@ -93,10 +78,9 @@
         chatBox.appendChild(bubble)
       })
       chatBox.scrollTop = chatBox.scrollHeight
-      console.log('Load selesai, total:', data.length)
     }
 
-    // 4. NYAMBUNGIN TOMBOL + ENTER - INI KUNCI ANTI GAGAL
+    // 4. NYAMBUNGIN TOMBOL + ENTER
     document.getElementById('btnKirim').addEventListener('click', kirimPesan)
     document.getElementById('pesanInput').addEventListener('keypress', function(e) {
       if(e.key === 'Enter') kirimPesan()
@@ -105,6 +89,5 @@
     // 5. LOAD PESAN PAS BUKA HALAMAN
     loadPesan()
   </script>
-  
 </body>
 </html>
