@@ -2,19 +2,23 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Yowasap</title>
+<meta name="theme-color" content="#075e54">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
+  body { height: 100dvh; } /* Pake dvh biar nggak ketutup keyboard HP */
   .chat-bg {
     background-color: #e5ddd5;
     background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns=http://www.w3.org/2000/svg%3E%3Cg fill='%239C92AC' fill-opacity='0.08' fill-rule='evenodd'%3E%3Ccircle cx='40' cy='40' r='1'/%3E%3C/g%3E%3C/svg%3E");
   }
 </style>
 </head>
-<body class="h-screen flex-col bg-[#e5ddd5]">
+<body class="flex flex-col bg-[#e5ddd5]">
 
-  <!-- HEADER + TOMBOL VC -->
+  <!-- HEADER + VC -->
   <div class="bg-[#075e54] text-white p-3 flex items-center gap-3 shadow-md flex-shrink-0">
     <div class="flex-1">
       <h1 class="font-medium text-base">Yowasap</h1>
@@ -27,33 +31,32 @@
     </button>
   </div>
 
-  <!-- SETTING PROFIL + KODE ROOM -->
+  <!-- SETTING -->
   <div class="bg-white/95 backdrop-blur px-3 py-2 flex-col gap-2 flex-shrink-0">
     <div class="flex items-center gap-2">
       <span class="text-sm text-gray-600 w-20">Nama</span>
-      <input id="nameInput" class="flex-1 text-sm bg-gray-100 rounded-lg px-2 py-1 outline-none" placeholder="Nama kamu" value="Sayang">
+      <input id="nameInput" class="flex-1 text-sm bg-gray-100 rounded-lg px-2 py-1 outline-none" placeholder="Nama kamu" value="Anam">
     </div>
     <div class="flex items-center gap-2">
       <span class="text-sm text-gray-600 w-20">Kode Room</span>
-      <input id="roomInput" class="flex-1 text-sm bg-gray-100 rounded-lg px-2 py-1 outline-none font-mono" placeholder="Contoh: SayangAnam123" value="SayangAnam123">
+      <input id="roomInput" class="flex-1 text-sm bg-gray-100 rounded-lg px-2 py-1 outline-none font-mono" placeholder="Tanpa spasi" value="MenujuHalal">
     </div>
   </div>
 
-  <!-- CHAT AREA -->
-  <div id="chatBox" class="flex-1 min-h-0 overflow-y-auto p-3 space-y-0.5 chat-bg"></div>
+  <!-- CHAT AREA - INI YANG DIBENERIN -->
+  <div id="chatBox" class="flex-1 overflow-y-auto p-3 space-y-0.5 chat-bg"></div>
 
-  <!-- INPUT BAWAH -->
+  <!-- INPUT BAWAH - NEMPEL TERUS -->
   <div class="p-2 bg-[#f0f0f0] flex items-end gap-2 flex-shrink-0">
     <input id="msgInput" class="flex-1 bg-white rounded-full px-4 py-2 text-sm outline-none" placeholder="Ketik pesan...">
-    <button id="sendBtn" class="bg-[#25D366] p-2.5 rounded-full active:scale-95">
+    <button id="sendBtn" class="bg-[#25D366] p-2.5 rounded-full active:scale-95 flex-shrink-0">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
     </button>
   </div>
 
-<!-- SATU SCRIPT AJA -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getDatabase, ref, push, onChildAdded, off } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCZHdGHSMBT8g8xs2H78yhDx0dbEv2H0xg",
@@ -76,31 +79,23 @@
   const roomStatus = document.getElementById('roomStatus');
 
   let chatRef;
-  let offListener;
+  let currentRoom = '';
 
-  function myName() {
-    return nameInput.value.trim() || 'Aku';
-  }
+  function myName() { return nameInput.value.trim() || 'Aku'; }
+  function getRoom() { return roomInput.value.trim().replace(/[^a-zA-Z0-9]/g, '') || 'default'; }
 
-  function getRoom() {
-    return roomInput.value.trim().replace(/[^a-zA-Z0-9]/g, '') || 'default';
-  }
-
-  // JOIN ROOM BARU
   function joinRoom() {
-    if(offListener) offListener();
-    
-    chatBox.innerHTML = `<div class="text-center text-xs text-gray-500 mt-10">Masuk ke room: ${getRoom()}...<br>Ketik pesan buat mulai chat</div>`;
-    roomStatus.innerText = 'Room: ' + getRoom();
-    
-    chatRef = ref(db, 'rooms/' + getRoom() + '/chat');
-    
-    offListener = onChildAdded(chatRef, (snapshot) => {
+    const newRoom = getRoom();
+    if(newRoom === currentRoom) return;
+    currentRoom = newRoom;
+    roomStatus.innerText = 'Room: ' + currentRoom;
+    chatBox.innerHTML = `<div class="text-center text-xs text-gray-500 mt-10">Masuk ke room: ${currentRoom}</div>`;
+    if(chatRef) off(chatRef);
+    chatRef = ref(db, 'rooms/' + currentRoom + '/chat');
+    onChildAdded(chatRef, (snapshot) => {
       const data = snapshot.val();
       const isMe = data.name === myName();
-      
       if(chatBox.children.length === 1) chatBox.innerHTML = '';
-      
       const div = document.createElement('div');
       div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-1`;
       div.innerHTML = `
@@ -115,45 +110,26 @@
     });
   }
 
-  // KIRIM PESAN
   function kirimPesan() {
     const text = msgInput.value.trim();
     if(text === '' || !chatRef) return;
-    push(chatRef, {
-      name: myName(),
-      text: text,
-      time: new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})
-    });
+    push(chatRef, { name: myName(), text: text, time: new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) });
     msgInput.value = '';
   }
 
   sendBtn.onclick = kirimPesan;
-  msgInput.addEventListener('keypress', (e) => {
-    if(e.key === 'Enter') kirimPesan();
-  });
+  msgInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') kirimPesan(); });
+  roomInput.addEventListener('blur', joinRoom);
+  nameInput.addEventListener('blur', () => localStorage.setItem('yowasap_name', myName()));
+  roomInput.addEventListener('blur', () => localStorage.setItem('yowasap_room', roomInput.value.trim()));
 
-  // GANTI ROOM OTOMATIS
-  roomInput.addEventListener('change', joinRoom);
-  
-  // SAVE NAMA KE LOCAL
-  nameInput.addEventListener('change', () => {
-    localStorage.setItem('yowasap_name', myName());
-  });
-  roomInput.addEventListener('change', () => {
-    localStorage.setItem('yowasap_room', getRoom());
-  });
+  nameInput.value = localStorage.getItem('yowasap_name') || 'Anam';
+  roomInput.value = localStorage.getItem('yowasap_room') || 'MenujuHalal';
 
-  // LOAD NAMA & ROOM DARI LOCAL
-  nameInput.value = localStorage.getItem('yowasap_name') || 'Sayang';
-  roomInput.value = localStorage.getItem('yowasap_room') || 'SayangAnam123';
-
-  // TOMBOL VC - NGIKUT KODE ROOM
   document.getElementById('btnCall').onclick = () => {
-    const room = 'Yowasap-' + getRoom();
-    window.open('https://meet.jit.si/' + room, '_blank', 'noopener,noreferrer');
+    window.location.href = 'https://meet.jit.si/Yowasap-' + getRoom();
   }
 
-  // JALANIN PERTAMA KALI
   joinRoom();
 </script>
 </body>
