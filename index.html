@@ -3,114 +3,70 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Yowasap PRO</title>
-
+<title>Yowasap</title>
 <style>
-body{
-  margin:0;
-  font-family:system-ui;
-  background:#e5ddd5;
-  height:100vh;
-  display:flex;
-  flex-direction:column;
-}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#e5ddd5;height:100vh;display:flex;flex-direction:column}
 
 /* HEADER */
-.header{
-  background:#075E54;
-  color:white;
-  padding:12px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
+.header{background:#075e54;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:12px}
+.header img{width:42px;height:42px;border-radius:50%;object-fit:cover;background:#ccc}
+.header-text b{font-size:17px;display:block}
+.header-text span{font-size:13px;opacity:0.9}
 
 /* CHAT */
-#chatBox{
-  flex:1;
-  overflow-y:auto;
-  padding:10px;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  background-image:url("https://i.imgur.com/qLX3X5X.png");
-  background-size:300px;
-}
+#chatBox{flex:1;overflow-y:auto;padding:20px;background:url('https://i.imgur.com/qLX3X5X.png') repeat;background-size:300px;display:flex;flex-direction:column}
 
-/* MESSAGE */
-.msg{
-  max-width:75%;
-  padding:8px 10px;
-  border-radius:10px;
-  font-size:14px;
-  box-shadow:0 1px 1px rgba(0,0,0,0.1);
-}
+/* MESSAGE + AVATAR */
+.msg{display:flex;gap:8px;margin-bottom:12px;align-items:flex-end}
+.msg.me{justify-content:flex-end}
+.msg.other{justify-content:flex-start}
 
-.msg.me{
-  background:#dcf8c6;
-  align-self:flex-end;
-  border-top-right-radius:0;
-}
+.avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#ddd}
 
-.msg.other{
-  background:white;
-  align-self:flex-start;
-  border-top-left-radius:0;
+.bubble{
+  max-width:70%;
+  padding:8px 12px;
+  border-radius:8px;
+  font-size:15px;
+  line-height:1.4;
+  box-shadow:0 1px 0.5px rgba(0,0,0,.13);
+  word-wrap:break-word
 }
+.me .bubble{background:#dcf8c6;border-top-right-radius:0}
+.other .bubble{background:#fff;border-top-left-radius:0}
 
-.time{
-  font-size:10px;
-  color:#667781;
-  float:right;
-}
+.time{font-size:11px;color:#667781;margin-left:6px}
 
 /* INPUT */
-.input{
-  display:flex;
-  padding:8px;
-  background:#f0f0f0;
-  gap:8px;
-}
-
-input{
-  flex:1;
-  padding:10px;
-  border:none;
-  border-radius:20px;
-}
-
-button{
-  border:none;
-  background:#075E54;
-  color:white;
-  border-radius:50%;
-  width:42px;
-  height:42px;
-}
+.inputBox{display:flex;padding:10px;background:#f0f0f0;gap:8px}
+.inputBox input{flex:1;padding:10px 14px;border:none;border-radius:20px;outline:none;font-size:15px}
+.inputBox button{background:#075e54;color:#fff;border:none;border-radius:50%;width:48px;height:48px;cursor:pointer;font-size:20px}
 </style>
 </head>
-
 <body>
 
 <div class="header">
-  <div>💬 Yowasap PRO</div>
-  <button onclick="startCall()">📞</button>
+  <img id="headerPhoto" src="https://i.imgur.com/VcRPpDG.png" alt="foto">
+  <div class="header-text">
+    <b id="headerName">Lina</b>
+    <span id="headerStatus">online</span>
+  </div>
 </div>
 
 <div id="chatBox"></div>
 
-<div class="input">
-  <input id="input" placeholder="Ketik pesan...">
-  <button onclick="send()">➤</button>
+<div class="inputBox">
+  <input id="input" placeholder="Ketik pesan..." disabled>
+  <button id="sendBtn" onclick="send()" disabled>➤</button>
 </div>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <script>
-/* ================= FIREBASE CONFIG ================= */
+/* ========== 1. FIREBASE CONFIG - GANTI PUNYA KAMU ========== */
 const firebaseConfig = {
   apiKey: "AIzaSyCZHdGHSMBT8g8xs2H78yhDx0dbEv2H0xg",
   authDomain: "yowasap.firebaseapp.com",
@@ -124,182 +80,90 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* ================= USER ================= */
-let myId;
-let roomId = prompt("Room ID") || "default-room";
+/* ========== 2. AUTO DETEKSI USER DARI LINK ========== */
+const urlParams = new URLSearchParams(window.location.search);
+const user = urlParams.get('user') || 'Anam';
+const roomId = urlParams.get('room') || 'default-room';
 
-firebase.auth().signInAnonymously().then(u=>{
-  myId = u.user.uid;
-  initChat();
-  listenCall();
-});
+const myName = user;
+const herName = user === 'Anam' ? 'Lina' : 'Anam';
 
-/* ================= CHAT ================= */
+// GANTI LINK INI PAKE FOTO KAMU + LINA DI IMGUR.COM
+const myPhoto = user === 'Anam' 
+  ? 'https://i.imgur.com/8Km9tLL.png' 
+  : 'https://i.imgur.com/VcRPpDG.png';
+const herPhoto = user === 'Anam' 
+  ? 'https://i.imgur.com/VcRPpDG.png' 
+  : 'https://i.imgur.com/8Km9tLL.png';
+
+// SET HEADER
+document.getElementById('headerName').textContent = herName;
+document.getElementById('headerPhoto').src = herPhoto;
+
+let myId = null;
 const chatRef = db.ref("chats/"+roomId+"/messages");
 const chatBox = document.getElementById("chatBox");
+const input = document.getElementById("input");
+const sendBtn = document.getElementById("sendBtn");
 
+/* ========== 3. LOGIN ========== */
+firebase.auth().signInAnonymously()
+.then(u => {
+  myId = u.user.uid;
+  input.disabled = false;
+  sendBtn.disabled = false;
+  initChat();
+})
+.catch(e => {
+  alert("Aktifin Anonymous Login di Firebase Console > Authentication > Sign-in method");
+});
+
+/* ========== 4. KIRIM PESAN ========== */
 function send(){
-  let text = document.getElementById("input").value;
-  if(!text.trim()) return;
+  let text = input.value.trim();
+  if(!text || !myId) return;
 
   chatRef.push({
     text,
     senderId: myId,
+    name: myName,
     time: Date.now()
   });
-
-  document.getElementById("input").value="";
+  input.value = "";
 }
 
+input.addEventListener('keypress', e => {
+  if(e.key === 'Enter') send();
+});
+
+/* ========== 5. TAMPILIN PESAN + AVATAR ========== */
 function render(msg){
   const div = document.createElement("div");
-  div.className = "msg " + (msg.senderId===myId ? "me":"other");
+  div.className = "msg " + (msg.senderId === myId ? "me" : "other");
 
-  let t = new Date(msg.time).toLocaleTimeString([],{
-    hour:"2-digit",minute:"2-digit"
-  });
+  let t = new Date(msg.time).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+  
+  // Avatar dia di kiri, avatar kamu di kanan
+  let avatarUrl = msg.senderId === myId ? myPhoto : herPhoto;
 
   div.innerHTML = `
-    ${msg.text}
-    <span class="time">${t}</span>
+    ${msg.senderId !== myId ? `<img class="avatar" src="${herPhoto}">` : ''}
+    <div class="bubble">
+      ${msg.text}
+      <span class="time">${t}</span>
+    </div>
+    ${msg.senderId === myId ? `<img class="avatar" src="${myPhoto}">` : ''}
   `;
-
+  
   chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 function initChat(){
-  chatRef.on("child_added", snap=>{
+  chatRef.on("child_added", snap => {
     render(snap.val());
   });
 }
-
-/* ================= CALL SYSTEM ================= */
-const callRef = db.ref("calls/"+roomId);
-
-/* ringtone */
-const ring = new Audio("https://actions.google.com/sounds/v1/alarms/phone_alerts_and_rings.ogg");
-ring.loop = true;
-
-/* START CALL */
-function startCall(){
-  const room = "call_"+roomId;
-
-  callRef.set({
-    from: myId,
-    status: "ringing",
-    room
-  });
-}
-
-/* LISTEN CALL */
-function listenCall(){
-  callRef.on("value", snap=>{
-    const c = snap.val();
-    if(!c) return;
-
-    if(c.status==="ringing" && c.from!==myId){
-      showIncoming(c.room);
-    }
-
-    if(c.status==="accepted"){
-      ring.pause();
-      openCall(c.room);
-    }
-
-    if(c.status==="ended"){
-      closeCall();
-    }
-  });
-}
-
-/* INCOMING UI */
-function showIncoming(room){
-  ring.play();
-
-  if(document.getElementById("inc")) return;
-
-  const box = document.createElement("div");
-  box.id="inc";
-  box.style=`
-    position:fixed;inset:0;
-    background:#075E54;
-    color:white;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-    z-index:9999;
-  `;
-
-  box.innerHTML=`
-    <h2>📞 Incoming Call</h2>
-    <button onclick="accept('${room}')">Accept</button>
-    <button onclick="reject()">Reject</button>
-  `;
-
-  document.body.appendChild(box);
-}
-
-/* ACCEPT */
-function accept(room){
-  callRef.update({status:"accepted"});
-  ring.pause();
-  openCall(room);
-}
-
-/* REJECT */
-function reject(){
-  ring.pause();
-  callRef.update({status:"ended"});
-  document.getElementById("inc")?.remove();
-}
-
-/* CALL UI */
-let timer,sec=0;
-
-function openCall(room){
-  const ui=document.createElement("div");
-  ui.id="callUI";
-  ui.style=`
-    position:fixed;inset:0;background:black;z-index:9999;
-  `;
-
-  ui.innerHTML=`
-    <iframe src="https://meet.jit.si/${room}"
-      style="width:100%;height:100%;border:0"></iframe>
-
-    <button onclick="endCall()"
-      style="position:absolute;bottom:20px;left:50%;
-      transform:translateX(-50%);
-      background:red;color:white;padding:12px;border-radius:50%;">
-      END
-    </button>
-
-    <div id="t" style="position:absolute;top:20px;left:20px;color:white;">
-      00:00
-    </div>
-  `;
-
-  document.body.appendChild(ui);
-
-  sec=0;
-  timer=setInterval(()=>{
-    sec++;
-    let m=String(Math.floor(sec/60)).padStart(2,"0");
-    let s=String(sec%60).padStart(2,"0");
-    document.getElementById("t").innerText=m+":"+s;
-  },1000);
-}
-
-/* END CALL */
-function endCall(){
-  clearInterval(timer);
-  callRef.update({status:"ended"});
-  document.getElementById("callUI")?.remove();
-  document.getElementById("inc")?.remove();
-}
 </script>
-
 </body>
 </html>
