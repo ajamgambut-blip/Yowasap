@@ -5,13 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Yowasap</title>
 
-<!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#075E54">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Yowasap">
-<link rel="apple-touch-icon" href="icon-512.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -22,8 +21,6 @@ body {
   display: flex;
   flex-direction: column;
 }
-
-/* HEADER WA */
 .header {
   background: #075E54;
   color: white;
@@ -45,10 +42,6 @@ body {
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
-}
-.header-left .name {
-  display: flex;
-  flex-direction: column;
 }
 .header-left .name b { font-size: 17px; }
 .header-left .name span { font-size: 12px; opacity: 0.9; }
@@ -73,8 +66,6 @@ body {
   font-size: 22px;
   z-index: 2;
 }
-
-/* CHAT AREA */
 .chat {
   flex: 1;
   overflow-y: auto;
@@ -102,8 +93,6 @@ body {
   margin-left: 8px;
   float: right;
 }
-
-/* INPUT */
 .input-area {
   display: flex;
   padding: 8px;
@@ -132,18 +121,18 @@ body {
 </head>
 <body>
 
-<!-- HEADER -->
+<!-- HEADER FIX -->
 <div class="header">
   <div class="header-left">
-    <img src="avatars/foto-kamu.jpg" alt="Kamu">
+    <img src="avatars/foto-1.png" alt="Anam"> <!-- KAMU -->
     <div class="name">
-      <b>Yowasap</b>
-      <span>Lina online</span>
+      <b>Lina</b>
+      <span>online</span>
     </div>
   </div>
   
   <div class="header-center">
-    <img src="avatars/foto-grup.jpg" alt="Grup">
+    <img src="avatars/foto-grup.png" alt="Grup"> <!-- FOTO COUPLE -->
   </div>
   
   <div class="header-icons">
@@ -152,19 +141,15 @@ body {
   </div>
 </div>
 
-<!-- CHAT -->
 <div class="chat" id="chatBox"></div>
 
-<!-- INPUT -->
 <div class="input-area">
   <input id="input" placeholder="Ketik pesan..." autocomplete="off">
   <button onclick="sendMessage()">➤</button>
 </div>
 
 <script>
-// LOAD CHAT DARI HP
 let messages = JSON.parse(localStorage.getItem('yowasap-chat')) || [];
-
 const chatBox = document.getElementById('chatBox');
 const input = document.getElementById('input');
 
@@ -181,15 +166,12 @@ function renderMessages() {
 
 function sendMessage() {
   if(input.value.trim() === '') return;
-  
   messages.push({
     text: input.value,
     isMe: true,
     time: new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})
   });
-  
   localStorage.setItem('yowasap-chat', JSON.stringify(messages));
-  
   renderMessages();
   input.value = '';
 }
@@ -198,10 +180,8 @@ input.addEventListener('keypress', e => {
   if(e.key === 'Enter') sendMessage();
 });
 
-// RENDER PAS BUKA APP
 renderMessages();
 
-// DAFTARIN SERVICE WORKER
 if('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
 }
