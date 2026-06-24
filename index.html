@@ -62,10 +62,12 @@ body {
 
 .header-icons {
   display: flex;
-  gap: 20px;
+  gap: 18px;
   font-size: 22px;
   z-index: 2;
 }
+.header-icons a { color: white; text-decoration: none; }
+
 .chat {
   flex: 1;
   overflow-y: auto;
@@ -74,18 +76,34 @@ body {
   background-size: cover;
 }
 .msg {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+  max-width: 80%;
+}
+.msg.me {
+  margin-left: auto;
+  flex-direction: row-reverse;
+}
+.bubble-photo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  align-self: flex-end;
+  margin-bottom: 4px;
+}
+.bubble {
   background: white;
   padding: 8px 12px;
   border-radius: 8px;
-  margin: 5px 0;
-  max-width: 75%;
   box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
   position: relative;
   word-wrap: break-word;
+  max-width: calc(100% - 40px);
 }
-.msg.me {
+.msg.me .bubble {
   background: #dcf8c6;
-  margin-left: auto;
 }
 .time {
   font-size: 11px;
@@ -117,29 +135,43 @@ body {
   font-size: 20px;
   cursor: pointer;
 }
+.jismeet-btn {
+  background: #128C7E;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  margin: 10px auto;
+  display: block;
+  cursor: pointer;
+}
 </style>
 </head>
 <body>
 
-<!-- HEADER FIX -->
+<!-- HEADER -->
 <div class="header">
   <div class="header-left">
-    <img src="avatars/foto-1.png" alt="Anam"> <!-- KAMU -->
+    <img src="avatars/foto-1.png" alt="Anam">
     <div class="name">
       <b>Lina</b>
-      <span>online</span>
+      <span id="status">online</span>
     </div>
   </div>
   
   <div class="header-center">
-    <img src="avatars/foto-grup.png" alt="Grup"> <!-- FOTO COUPLE -->
+    <img src="avatars/foto-grup.png" alt="Grup">
   </div>
   
   <div class="header-icons">
-    <span>📹</span>
+    <a href="https://meet.jit.si/yowasap-lina-anam" target="_blank">📹</a>
+    <a href="tel:">📞</a>
     <span>⋮</span>
   </div>
 </div>
+
+<button class="jismeet-btn" onclick="window.open('https://meet.jit.si/yowasap-lina-anam','_blank')">Mulai Video Call</button>
 
 <div class="chat" id="chatBox"></div>
 
@@ -148,17 +180,58 @@ body {
   <button onclick="sendMessage()">➤</button>
 </div>
 
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
 <script>
-let messages = JSON.parse(localStorage.getItem('yowasap-chat')) || [];
+const firebaseConfig = {
+  apiKey: "AIzaSyCZHdGHSMBT8g8xs2H78yhDx0dbEv2H0xg",
+  authDomain: "yowasap.firebaseapp.com",
+  databaseURL: "https://yowasap-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "yowasap",
+  storageBucket: "yowasap.firebasestorage.app",
+  messagingSenderId: "964491262310",
+  appId: "1:964491262310:web:086e5f2cbf0af8398870a7"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const chatRef = db.ref('chat-anam-lina');
+
+let messages = [];
 const chatBox = document.getElementById('chatBox');
 const input = document.getElementById('input');
+const myName = 'Anam'; 
+const myPhoto = 'avatars/foto-1.png'; 
+const herPhoto = 'avatars/foto-2.png'; 
+
+// Load chat real-time
+chatRef.on('child_added', snapshot => {
+  const msg = snapshot.val();
+  messages.push(msg);
+  localStorage.setItem('yowasap-chat', JSON.stringify(messages));
+  renderMessages();
+});
 
 function renderMessages() {
   chatBox.innerHTML = '';
   messages.forEach(msg => {
+    const isMe = msg.sender === myName;
     const div = document.createElement('div');
-    div.className = msg.isMe ? 'msg me' : 'msg';
-    div.innerHTML = msg.text + `<span class="time">${msg.time}</span>`;
+    div.className = isMe ? 'msg me' : 'msg';
+    
+    const photo = document.createElement('img');
+    photo.className = 'bubble-photo';
+    photo.src = isMe ? myPhoto : herPhoto;
+    photo.onerror = () => photo.style.display = 'none'; // kalo foto ga ada ga bikin rusak
+    
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.innerHTML = msg.text + `<span class="time">${msg.time}</span>`;
+    
+    div.appendChild(photo);
+    div.appendChild(bubble);
     chatBox.appendChild(div);
   });
   chatBox.scrollTop = chatBox.scrollHeight;
@@ -166,13 +239,12 @@ function renderMessages() {
 
 function sendMessage() {
   if(input.value.trim() === '') return;
-  messages.push({
+  const newMsg = {
     text: input.value,
-    isMe: true,
+    sender: myName,
     time: new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})
-  });
-  localStorage.setItem('yowasap-chat', JSON.stringify(messages));
-  renderMessages();
+  };
+  chatRef.push(newMsg);
   input.value = '';
 }
 
@@ -180,6 +252,8 @@ input.addEventListener('keypress', e => {
   if(e.key === 'Enter') sendMessage();
 });
 
+// Load backup lokal dulu
+messages = JSON.parse(localStorage.getItem('yowasap-chat')) || [];
 renderMessages();
 
 if('serviceWorker' in navigator) {
