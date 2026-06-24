@@ -3,96 +3,139 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Yowasap v2</title>
+<title>Yowasap PRO MAX</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #ece5dd;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
+body{
+  margin:0;
+  font-family:system-ui;
+  background:#e5ddd5;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
 }
 
-.header {
-  background: #075E54;
-  color: white;
-  padding: 12px;
-  font-weight: bold;
+/* HEADER */
+.header{
+  background:#075E54;
+  color:white;
+  padding:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
-#chatBox {
-  flex: 1;
-  overflow-y: auto;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+/* CHAT */
+#chatBox{
+  flex:1;
+  overflow-y:auto;
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  background-image:url("https://i.imgur.com/qLX3X5X.png");
+  background-size:300px;
 }
 
-.msg {
-  max-width: 75%;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: white;
-  align-self: flex-start;
+/* MESSAGE */
+.msg{
+  max-width:75%;
+  padding:8px;
+  border-radius:10px;
+  font-size:14px;
+  background:white;
+  position:relative;
 }
 
-.msg.me {
-  background: #dcf8c6;
-  align-self: flex-end;
+.msg.me{
+  background:#dcf8c6;
+  align-self:flex-end;
 }
 
-.time {
-  font-size: 10px;
-  color: gray;
-  margin-left: 6px;
+.time{
+  font-size:10px;
+  color:#666;
+  float:right;
 }
 
-.input-area {
-  display: flex;
-  padding: 8px;
-  background: #f0f0f0;
-  gap: 6px;
+/* INPUT BAR */
+.input{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  padding:8px;
+  background:#f0f0f0;
 }
 
-input {
-  flex: 1;
-  padding: 10px;
-  border-radius: 20px;
-  border: none;
-  outline: none;
+input, button{
+  border:none;
+  padding:8px;
+  border-radius:20px;
 }
 
-button {
-  background: #075E54;
-  color: white;
-  border: none;
-  width: 44px;
-  border-radius: 50%;
+input{
+  flex:1;
+}
+
+/* MEDIA PREVIEW */
+.media{
+  max-width:200px;
+  border-radius:10px;
+  margin-top:5px;
+}
+
+/* ACTION MENU */
+.menu{
+  position:absolute;
+  right:0;
+  top:0;
+  background:#fff;
+  border:1px solid #ccc;
+  border-radius:8px;
+  display:none;
+  z-index:10;
+}
+.menu button{
+  display:block;
+  width:100%;
+  background:none;
+  padding:6px;
+  border:none;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header" id="header">Yowasap</div>
+<div class="header">
+  <div>💬 Yowasap PRO MAX</div>
+</div>
 
 <div id="chatBox"></div>
 
-<div class="input-area">
+<div class="input">
   <input id="input" placeholder="Ketik pesan...">
-  <button onclick="sendMessage()">➤</button>
+  <button onclick="sendText()">➤</button>
+
+  <input type="file" id="fileImg" accept="image/*" hidden>
+  <button onclick="fileImg.click()">🖼</button>
+
+  <input type="file" id="fileVideo" accept="video/*" hidden>
+  <button onclick="fileVideo.click()">🎥</button>
+
+  <input type="file" id="fileDoc" hidden>
+  <button onclick="fileDoc.click()">📎</button>
+
+  <button onclick="startRecord()">🎤</button>
 </div>
 
 <!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
 <script>
-/* ================= FIREBASE CONFIG ================= */
 const firebaseConfig = {
   apiKey: "AIzaSyCZHdGHSMBT8g8xs2H78yhDx0dbEv2H0xg",
   authDomain: "yowasap.firebaseapp.com",
@@ -105,73 +148,159 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+const storage = firebase.storage();
 
-/* ================= AUTH ANON ================= */
-let myId = null;
+let myId;
+let myName = prompt("Nama kamu") || "User";
+let room = prompt("Room ID") || "default";
 
-firebase.auth().signInAnonymously()
-.then(user => {
-  myId = user.user.uid;
-  initChat();
+const chatRef = db.ref("chat/"+room);
+
+firebase.auth().signInAnonymously().then(u=>{
+  myId = u.user.uid;
 });
 
-/* ================= ROOM ================= */
-const roomId = prompt("Masukkan Room ID (contoh: lina-anam)") || "default-room";
-document.getElementById("header").innerText = "Room: " + roomId;
+/* SEND TEXT */
+function sendText(){
+  let text = input.value;
+  if(!text.trim()) return;
 
-const chatRef = db.ref("chats/" + roomId + "/messages");
-
-const chatBox = document.getElementById("chatBox");
-const input = document.getElementById("input");
-
-/* ================= SEND MESSAGE ================= */
-function sendMessage() {
-  if (!input.value.trim()) return;
-
-  const msg = {
-    text: input.value,
-    senderId: myId,
-    timestamp: Date.now()
-  };
-
-  chatRef.push(msg);
-  input.value = "";
-}
-
-/* ================= RENDER SINGLE ================= */
-function renderMessage(msg, isMe) {
-  const div = document.createElement("div");
-  div.className = "msg" + (isMe ? " me" : "");
-
-  const time = new Date(msg.timestamp).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit"
+  chatRef.push({
+    type:"text",
+    text,
+    name:myName,
+    uid:myId,
+    time:Date.now()
   });
 
-  div.innerHTML = `
-    ${msg.text}
-    <span class="time">${time}</span>
+  input.value="";
+}
+
+/* SEND FILE */
+function sendFile(file,type){
+  const ref = storage.ref("files/"+Date.now()+"_"+file.name);
+
+  ref.put(file).then(()=>{
+    ref.getDownloadURL().then(url=>{
+      chatRef.push({
+        type,
+        url,
+        name:myName,
+        uid:myId,
+        time:Date.now()
+      });
+    });
+  });
+}
+
+/* IMAGE */
+fileImg.onchange = e=>{
+  sendFile(e.target.files[0],"image");
+};
+
+/* VIDEO */
+fileVideo.onchange = e=>{
+  sendFile(e.target.files[0],"video");
+};
+
+/* DOC */
+fileDoc.onchange = e=>{
+  sendFile(e.target.files[0],"file");
+};
+
+/* VOICE */
+let recorder, chunks=[];
+
+function startRecord(){
+  navigator.mediaDevices.getUserMedia({audio:true})
+  .then(stream=>{
+    recorder = new MediaRecorder(stream);
+    recorder.start();
+
+    recorder.ondataavailable = e=>{
+      chunks.push(e.data);
+    };
+
+    recorder.onstop = ()=>{
+      const blob = new Blob(chunks,{type:"audio/webm"});
+      chunks=[];
+
+      const ref = storage.ref("voice/"+Date.now()+".webm");
+      ref.put(blob).then(()=>{
+        ref.getDownloadURL().then(url=>{
+          chatRef.push({
+            type:"voice",
+            url,
+            name:myName,
+            uid:myId,
+            time:Date.now()
+          });
+        });
+      });
+    };
+
+    setTimeout(()=>recorder.stop(),3000);
+  });
+}
+
+/* RENDER */
+chatRef.on("child_added", snap=>{
+  render(snap.key,snap.val());
+});
+
+function render(id,m){
+  const div=document.createElement("div");
+  div.className="msg "+(m.uid===myId?"me":"");
+
+  let content="";
+
+  if(m.type==="text") content=m.text;
+  if(m.type==="image") content=`<img class='media' src='${m.url}'>`;
+  if(m.type==="video") content=`<video class='media' controls src='${m.url}'></video>`;
+  if(m.type==="file") content=`📎 <a href='${m.url}' target='_blank'>Download file</a>`;
+  if(m.type==="voice") content=`🎤 <audio controls src='${m.url}'></audio>`;
+
+  let t=new Date(m.time).toLocaleTimeString([],{
+    hour:"2-digit",minute:"2-digit"
+  });
+
+  div.innerHTML=`
+    <b>${m.name}</b><br>
+    ${content}
+    <span class='time'>${t}</span>
+
+    ${m.uid===myId?`
+    <div class="menu">
+      <button onclick="editMsg('${id}')">Edit</button>
+      <button onclick="deleteMsg('${id}')">Delete</button>
+    </div>`:""}
   `;
 
+  /* long press menu */
+  div.oncontextmenu=e=>{
+    e.preventDefault();
+    div.querySelector(".menu").style.display="block";
+  };
+
   chatBox.appendChild(div);
-  chatBox.scrollTop = chatBox.scrollHeight;
+  chatBox.scrollTop=chatBox.scrollHeight;
 }
 
-/* ================= INIT CHAT ================= */
-function initChat() {
+/* EDIT */
+function editMsg(id){
+  let newText=prompt("Edit pesan:");
+  if(!newText) return;
 
-  chatRef.on("child_added", snap => {
-    const msg = snap.val();
-    const isMe = msg.senderId === myId;
-    renderMessage(msg, isMe);
+  chatRef.child(id).update({
+    text:newText,
+    type:"text"
   });
-
 }
 
-/* ================= ENTER KEY ================= */
-input.addEventListener("keypress", e => {
-  if (e.key === "Enter") sendMessage();
-});
+/* DELETE */
+function deleteMsg(id){
+  chatRef.child(id).remove();
+}
 </script>
 
 </body>
