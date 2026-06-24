@@ -6,51 +6,43 @@
 <title>Yowasap</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#e5ddd5;height:100vh;display:flex;flex-direction:column}
-
-/* HEADER */
-.header{background:#075e54;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:12px}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#e5ddd5;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.header{background:#075e54;color:#fff;padding:8px 16px;display:flex;align-items:center;gap:12px;height:59px;box-shadow:0 1px 3px rgba(0,0,0,.4)}
 .header img{width:42px;height:42px;border-radius:50%;object-fit:cover;background:#ccc}
-.header-text b{font-size:17px;display:block}
+.header-text{flex:1}.header-text b{font-size:17px;display:block;line-height:1.2}
 .header-text span{font-size:13px;opacity:0.9}
-
-/* CHAT */
-#chatBox{flex:1;overflow-y:auto;padding:20px;background:url('https://i.imgur.com/qLX3X5X.png') repeat;background-size:300px;display:flex;flex-direction:column}
-
-/* MESSAGE + AVATAR */
-.msg{display:flex;gap:8px;margin-bottom:12px;align-items:flex-end}
-.msg.me{justify-content:flex-end}
-.msg.other{justify-content:flex-start}
-
-.avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#ddd}
-
-.bubble{
-  max-width:70%;
-  padding:8px 12px;
-  border-radius:8px;
-  font-size:15px;
-  line-height:1.4;
-  box-shadow:0 1px 0.5px rgba(0,0,0,.13);
-  word-wrap:break-word
-}
+.header-btns{display:flex;gap:22px}
+.header-btns button{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:5px}
+#chatBox{flex:1;overflow-y:auto;padding:20px 8px;background-color:#ece5dd;background-image:url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');background-size:contain;display:flex;flex-direction:column}
+.msg{display:flex;gap:8px;margin-bottom:12px;align-items:flex-end;max-width:100%}
+.msg.me{justify-content:flex-end;padding-right:5px}
+.msg.other{justify-content:flex-start;padding-left:5px}
+.avatar{width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#ddd}
+.bubble{max-width:65%;padding:7px 12px 8px;border-radius:7.5px;font-size:15px;line-height:1.4;box-shadow:0 1px 0.5px rgba(0,0,0,.13);word-wrap:break-word;position:relative}
 .me .bubble{background:#dcf8c6;border-top-right-radius:0}
 .other .bubble{background:#fff;border-top-left-radius:0}
-
-.time{font-size:11px;color:#667781;margin-left:6px}
-
-/* INPUT */
-.inputBox{display:flex;padding:10px;background:#f0f0f0;gap:8px}
-.inputBox input{flex:1;padding:10px 14px;border:none;border-radius:20px;outline:none;font-size:15px}
-.inputBox button{background:#075e54;color:#fff;border:none;border-radius:50%;width:48px;height:48px;cursor:pointer;font-size:20px}
+.time{font-size:11px;color:#667781;margin-left:6px;float:right;margin-top:3px}
+.inputBox{display:flex;padding:5px 10px;background:#f0f0f0;gap:8px;align-items:center}
+.inputBox input{flex:1;padding:9px 12px;border:none;border-radius:21px;outline:none;font-size:15px;background:#fff}
+.inputBox button{background:#075e54;color:#fff;border:none;border-radius:50%;width:48px;height:48px;cursor:pointer;font-size:20px;flex-shrink:0}
+#callUI{position:fixed;inset:0;background:black;z-index:9999;display:none}
+#callUI iframe{width:100%;height:100%;border:0}
+#endCallBtn{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);background:#d32f2f;color:white;border:none;padding:14px 28px;border-radius:50px;font-size:16px;cursor:pointer;z-index:10000}
+#callTimer{position:absolute;top:20px;left:20px;color:white;font-size:18px;background:rgba(0,0,0,0.5);padding:6px 12px;border-radius:20px}
 </style>
 </head>
 <body>
 
 <div class="header">
-  <img id="headerPhoto" src="https://i.imgur.com/VcRPpDG.png" alt="foto">
+  <img id="headerPhoto" src="" alt="foto">
   <div class="header-text">
     <b id="headerName">Lina</b>
     <span id="headerStatus">online</span>
+  </div>
+  <div class="header-btns">
+    <button onclick="startCall()" title="Video Call">📹</button>
+    <button onclick="alert('Fitur telpon suara')" title="Call">📞</button>
+    <button onclick="alert('Menu')" title="Menu">⋮</button>
   </div>
 </div>
 
@@ -61,12 +53,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
   <button id="sendBtn" onclick="send()" disabled>➤</button>
 </div>
 
+<div id="callUI">
+  <div id="callTimer">00:00</div>
+  <iframe id="jitsiFrame" allow="camera; microphone; fullscreen; display-capture"></iframe>
+  <button id="endCallBtn" onclick="endCall()">Tutup Panggilan</button>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <script>
-/* ========== 1. FIREBASE CONFIG - GANTI PUNYA KAMU ========== */
 const firebaseConfig = {
   apiKey: "AIzaSyCZHdGHSMBT8g8xs2H78yhDx0dbEv2H0xg",
   authDomain: "yowasap.firebaseapp.com",
@@ -80,7 +77,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* ========== 2. AUTO DETEKSI USER DARI LINK ========== */
 const urlParams = new URLSearchParams(window.location.search);
 const user = urlParams.get('user') || 'Anam';
 const roomId = urlParams.get('room') || 'default-room';
@@ -88,81 +84,108 @@ const roomId = urlParams.get('room') || 'default-room';
 const myName = user;
 const herName = user === 'Anam' ? 'Lina' : 'Anam';
 
-// GANTI LINK INI PAKE FOTO KAMU + LINA DI IMGUR.COM
+/* === FOTO KAMU + LINA UDAH KEPASANG === */
 const myPhoto = user === 'Anam' 
-  ? 'https://i.imgur.com/8Km9tLL.png' 
-  : 'https://i.imgur.com/VcRPpDG.png';
-const herPhoto = user === 'Anam' 
-  ? 'https://i.imgur.com/VcRPpDG.png' 
-  : 'https://i.imgur.com/8Km9tLL.png';
+  ? 'https://i.imgur.com/FLFN9ax.png' 
+  : 'https://i.imgur.com/jUHiNC4.jpg';
 
-// SET HEADER
+const herPhoto = user === 'Anam' 
+  ? 'https://i.imgur.com/jUHiNC4.jpg' 
+  : 'https://i.imgur.com/FLFN9ax.png';
+
 document.getElementById('headerName').textContent = herName;
 document.getElementById('headerPhoto').src = herPhoto;
 
 let myId = null;
 const chatRef = db.ref("chats/"+roomId+"/messages");
+const callRef = db.ref("calls/"+roomId);
 const chatBox = document.getElementById("chatBox");
 const input = document.getElementById("input");
 const sendBtn = document.getElementById("sendBtn");
 
-/* ========== 3. LOGIN ========== */
 firebase.auth().signInAnonymously()
 .then(u => {
   myId = u.user.uid;
   input.disabled = false;
   sendBtn.disabled = false;
   initChat();
+  listenCall();
 })
-.catch(e => {
-  alert("Aktifin Anonymous Login di Firebase Console > Authentication > Sign-in method");
-});
+.catch(e => alert("Aktifin Anonymous Login di Firebase Console"));
 
-/* ========== 4. KIRIM PESAN ========== */
 function send(){
   let text = input.value.trim();
   if(!text || !myId) return;
-
-  chatRef.push({
-    text,
-    senderId: myId,
-    name: myName,
-    time: Date.now()
-  });
+  chatRef.push({text, senderId: myId, name: myName, time: Date.now()});
   input.value = "";
 }
+input.addEventListener('keypress', e => {if(e.key === 'Enter') send()});
 
-input.addEventListener('keypress', e => {
-  if(e.key === 'Enter') send();
-});
-
-/* ========== 5. TAMPILIN PESAN + AVATAR ========== */
 function render(msg){
   const div = document.createElement("div");
   div.className = "msg " + (msg.senderId === myId ? "me" : "other");
-
   let t = new Date(msg.time).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
   
-  // Avatar dia di kiri, avatar kamu di kanan
-  let avatarUrl = msg.senderId === myId ? myPhoto : herPhoto;
-
   div.innerHTML = `
     ${msg.senderId !== myId ? `<img class="avatar" src="${herPhoto}">` : ''}
-    <div class="bubble">
-      ${msg.text}
-      <span class="time">${t}</span>
-    </div>
+    <div class="bubble">${msg.text}<span class="time">${t}</span></div>
     ${msg.senderId === myId ? `<img class="avatar" src="${myPhoto}">` : ''}
   `;
-  
   chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;
 }
-
 function initChat(){
-  chatRef.on("child_added", snap => {
-    render(snap.val());
+  chatRef.on("child_added", snap => render(snap.val()));
+}
+
+let callTimer, sec = 0;
+function startCall(){
+  const jitsiRoom = "YowasapCall_" + roomId;
+  callRef.set({from: myId, status: "ringing", room: jitsiRoom});
+}
+function listenCall(){
+  callRef.on("value", snap => {
+    const c = snap.val();
+    if(!c) return;
+    if(c.status === "ringing" && c.from !== myId){
+      if(confirm(herName + " menelepon...\nAngkat?")){
+        acceptCall(c.room);
+      } else {
+        callRef.update({status: "ended"});
+      }
+    }
+    if(c.status === "accepted"){
+      openCall(c.room);
+    }
+    if(c.status === "ended"){
+      closeCall();
+    }
   });
+}
+function acceptCall(room){
+  callRef.update({status: "accepted"});
+  openCall(room);
+}
+function openCall(room){
+  document.getElementById('callUI').style.display = 'block';
+  document.getElementById('jitsiFrame').src = 
+    `https://meet.jit.si/${room}#config.prejoinPageEnabled=false&config.disableDeepLinking=true&userInfo.displayName=${myName}`;
+  sec = 0;
+  callTimer = setInterval(() => {
+    sec++;
+    let m = String(Math.floor(sec/60)).padStart(2,"0");
+    let s = String(sec%60).padStart(2,"0");
+    document.getElementById("callTimer").innerText = m+":"+s;
+  }, 1000);
+}
+function endCall(){
+  clearInterval(callTimer);
+  callRef.update({status: "ended"});
+  closeCall();
+}
+function closeCall(){
+  document.getElementById('callUI').style.display = 'none';
+  document.getElementById('jitsiFrame').src = '';
 }
 </script>
 </body>
