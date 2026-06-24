@@ -8,7 +8,6 @@
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; }
   body { background: #ece5dd; height: 100vh; overflow: hidden; }
 
-  /* HEADER IJO WA BENERAN */
  .header {
     background: #075E54;
     color: white;
@@ -27,13 +26,14 @@
     height: 40px;
     border-radius: 50%;
     object-fit: cover;
+    cursor: pointer;
   }
  .header-info { flex: 1; }
  .header-info h1 { font-size: 17px; font-weight: 500; }
  .header-info p { font-size: 12px; opacity: 0.8; }
  .header-icons { display: flex; gap: 20px; font-size: 20px; }
+ .header-icons span { cursor: pointer; }
 
-  /* CHAT AREA */
  .chat {
     padding: 70px 8px 60px 8px;
     height: 100vh;
@@ -64,7 +64,6 @@
   }
  .bubble.me.text { background: #DCF8C6; }
 
-  /* INPUT BAWAH WA STYLE */
  .input-area {
     position: fixed;
     bottom: 0;
@@ -101,63 +100,68 @@
 </head>
 <body>
 
-<!-- HEADER: FOTO COUPLE DI TENGAH -->
 <div class="header">
-  <img id="headerAvatar" src="avatars/foto-grup.png" alt="avatar">
+  <img id="headerAvatar" src="avatars/foto-grup.png" alt="avatar" onclick="gantiNama()">
   <div class="header-info">
     <h1>Yowasap</h1>
-    <p>online</p>
+    <p id="status">online</p>
   </div>
   <div class="header-icons">
-    <span>📞</span>
-    <span>📹</span>
-    <span>⋮</span>
+    <span onclick="alert('Fitur telpon belum bisa di web sayang 😅')">📞</span>
+    <span onclick="alert('Fitur VC belum bisa di web sayang 😅')">📹</span>
+    <span onclick="gantiNama()">⋮</span>
   </div>
 </div>
 
-<!-- CHAT CONTOH -->
-<div class="chat" id="chat">
-  <div class="bubble">
-    <img class="chatAvatar" src="">
-    <div class="text">Halo sayang 😊</div>
-  </div>
-  <div class="bubble me">
-    <img class="chatAvatar" src="">
-    <div class="text">Iya kamu lagi ngapain?</div>
-  </div>
-</div>
+<div class="chat" id="chat"></div>
 
-<!-- INPUT CHAT -->
 <div class="input-area">
   <input type="text" id="inputText" placeholder="Ketik pesan...">
   <button onclick="kirim()">➤</button>
 </div>
 
 <script>
-// ===== SETTING AVATAR =====
 const AVATAR_MAP = {
   "Anam": "avatars/foto-1.png",
   "Lina": "avatars/foto-2.png",
   "default": "avatars/foto-grup.png"
 };
 
+// FORCE MINTA NAMA SETIAP BUKA + Kalo pencet titik 3
+function mintaNama() {
+  let nama = prompt("Masukin nama kamu: Anam atau Lina");
+  if(nama === "Anam" || nama === "Lina") {
+    localStorage.setItem('nama', nama);
+    location.reload();
+  } else {
+    alert("Ketik 'Anam' atau 'Lina' doang ya sayang");
+    mintaNama();
+  }
+}
+
 let nama = localStorage.getItem('nama');
-if(!nama) {
-  nama = prompt("Masukin nama kamu: Anam atau Lina");
-  localStorage.setItem('nama', nama);
+if(!nama) mintaNama();
+
+// Fungsi ganti nama via titik 3
+function gantiNama() {
+  localStorage.removeItem('nama');
+  mintaNama();
 }
 
 function pasangAvatar() {
   document.getElementById('headerAvatar').src = AVATAR_MAP.default;
-  document.querySelectorAll('.chatAvatar').forEach(img => {
-    let bubble = img.closest('.bubble');
-    if(bubble.classList.contains('me')) {
-      img.src = AVATAR_MAP[nama] || AVATAR_MAP.default;
-    } else {
-      let namaLawan = nama === "Anam"? "Lina" : "Anam";
-      img.src = AVATAR_MAP[namaLawan] || AVATAR_MAP.default;
-    }
-  });
+  document.getElementById('status').innerText = nama + " online";
+  
+  // Chat contoh pertama kali
+  if(document.getElementById('chat').innerHTML === "") {
+    let lawan = nama === "Anam"? "Lina" : "Anam";
+    document.getElementById('chat').innerHTML = `
+      <div class="bubble">
+        <img class="chatAvatar" src="${AVATAR_MAP[lawan]}">
+        <div class="text">Halo sayang 😊</div>
+      </div>
+    `;
+  }
 }
 
 function kirim() {
