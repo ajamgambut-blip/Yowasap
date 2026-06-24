@@ -8,17 +8,17 @@
 <style>
   .chat-bg {
     background-color: #e5ddd5;
-    background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns=N/A%3E%3Cg fill='%239C92AC' fill-opacity='0.08' fill-rule='evenodd'%3E%3Ccircle cx='40' cy='40' r='1'/%3E%3C/g%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns=http://www.w3.org/2000/svg%3E%3Cg fill='%239C92AC' fill-opacity='0.08' fill-rule='evenodd'%3E%3Ccircle cx='40' cy='40' r='1'/%3E%3C/g%3E%3C/svg%3E");
   }
 </style>
 </head>
-<body class="h-screen flex flex-col bg-[#e5ddd5]">
+<body class="h-screen flex-col bg-[#e5ddd5]">
 
   <!-- HEADER + TOMBOL VC -->
   <div class="bg-[#075e54] text-white p-3 flex items-center gap-3 shadow-md flex-shrink-0">
     <div class="flex-1">
       <h1 class="font-medium text-base">Yowasap</h1>
-      <p id="status" class="text-xs opacity-80">online</p>
+      <p id="roomStatus" class="text-xs opacity-80">Room: belum dipilih</p>
     </div>
     <button id="btnCall" class="p-2 hover:bg-[#128c7e] rounded-full active:scale-95">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -27,36 +27,31 @@
     </button>
   </div>
 
-  <!-- SETTING PROFIL -->
-  <div class="bg-white/95 backdrop-blur px-3 py-2 flex items-center gap-2 flex-shrink-0">
-    <span class="text-sm text-gray-600">Nama</span>
-    <input id="nameInput" class="flex-1 text-sm bg-gray-100 rounded-lg px-2 py-1 outline-none" placeholder="Nama kamu">
-    <button id="gantiFoto" class="text-sm text-[#075e54] font-medium">Ganti Foto</button>
+  <!-- SETTING PROFIL + KODE ROOM -->
+  <div class="bg-white/95 backdrop-blur px-3 py-2 flex-col gap-2 flex-shrink-0">
+    <div class="flex items-center gap-2">
+      <span class="text-sm text-gray-600 w-20">Nama</span>
+      <input id="nameInput" class="flex-1 text-sm bg-gray-100 rounded-lg px-2 py-1 outline-none" placeholder="Nama kamu" value="Sayang">
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-sm text-gray-600 w-20">Kode Room</span>
+      <input id="roomInput" class="flex-1 text-sm bg-gray-100 rounded-lg px-2 py-1 outline-none font-mono" placeholder="Contoh: SayangAnam123" value="SayangAnam123">
+    </div>
   </div>
 
-  <!-- CHAT AREA - INI KUNCINYA -->
+  <!-- CHAT AREA -->
   <div id="chatBox" class="flex-1 min-h-0 overflow-y-auto p-3 space-y-0.5 chat-bg"></div>
 
   <!-- INPUT BAWAH -->
   <div class="p-2 bg-[#f0f0f0] flex items-end gap-2 flex-shrink-0">
-    <button class="p-2 text-gray-500">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.414a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
-    </button>
-    <input id="msgInput" class="flex-1 bg-white rounded-full px-4 py-2 text-sm outline-none" placeholder="Ketik pesan">
+    <input id="msgInput" class="flex-1 bg-white rounded-full px-4 py-2 text-sm outline-none" placeholder="Ketik pesan...">
     <button id="sendBtn" class="bg-[#25D366] p-2.5 rounded-full active:scale-95">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
     </button>
   </div>
 
-<script>
-// KODE VC - 3 BARIS DOANG
-document.getElementById('btnCall').onclick = () => {
-  const room = 'Yowasap-' + (document.getElementById('nameInput').value || 'Aku') + '-Anam'
-  window.open('https://meet.jit.si/' + room, '_blank')
-}
-
-// Sisa kode Firebase chat kamu tempel di bawah sini...
-  <script type="module">
+<!-- SATU SCRIPT AJA -->
+<script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
@@ -72,21 +67,58 @@ document.getElementById('btnCall').onclick = () => {
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
-  const chatRef = ref(db, 'chat');
 
   const chatBox = document.getElementById('chatBox');
   const msgInput = document.getElementById('msgInput');
   const sendBtn = document.getElementById('sendBtn');
   const nameInput = document.getElementById('nameInput');
+  const roomInput = document.getElementById('roomInput');
+  const roomStatus = document.getElementById('roomStatus');
+
+  let chatRef;
+  let offListener;
 
   function myName() {
-    return nameInput.value || 'Aku';
+    return nameInput.value.trim() || 'Aku';
+  }
+
+  function getRoom() {
+    return roomInput.value.trim().replace(/[^a-zA-Z0-9]/g, '') || 'default';
+  }
+
+  // JOIN ROOM BARU
+  function joinRoom() {
+    if(offListener) offListener();
+    
+    chatBox.innerHTML = `<div class="text-center text-xs text-gray-500 mt-10">Masuk ke room: ${getRoom()}...<br>Ketik pesan buat mulai chat</div>`;
+    roomStatus.innerText = 'Room: ' + getRoom();
+    
+    chatRef = ref(db, 'rooms/' + getRoom() + '/chat');
+    
+    offListener = onChildAdded(chatRef, (snapshot) => {
+      const data = snapshot.val();
+      const isMe = data.name === myName();
+      
+      if(chatBox.children.length === 1) chatBox.innerHTML = '';
+      
+      const div = document.createElement('div');
+      div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-1`;
+      div.innerHTML = `
+        <div class="max-w-[75%] px-3 py-2 rounded-lg shadow-sm ${isMe ? 'bg-[#dcf8c6] rounded-br-none' : 'bg-white rounded-bl-none'}">
+          ${!isMe ? `<p class="text-xs font-bold text-[#075e54] mb-0.5">${data.name}</p>` : ''}
+          <p class="text-sm text-gray-800 break-words">${data.text}</p>
+          <p class="text- text-gray-500 text-right mt-0.5">${data.time}</p>
+        </div>
+      `;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
   }
 
   // KIRIM PESAN
-  sendBtn.onclick = () => {
+  function kirimPesan() {
     const text = msgInput.value.trim();
-    if(text === '') return;
+    if(text === '' || !chatRef) return;
     push(chatRef, {
       name: myName(),
       text: text,
@@ -95,30 +127,34 @@ document.getElementById('btnCall').onclick = () => {
     msgInput.value = '';
   }
 
-  // TERIMA PESAN
-  onChildAdded(chatRef, (snapshot) => {
-    const data = snapshot.val();
-    const isMe = data.name === myName();
-    
-    const div = document.createElement('div');
-    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'}`;
-    div.innerHTML = `
-      <div class="max-w-[75%] px-3 py-2 rounded-lg shadow-sm ${isMe ? 'bg-[#dcf8c6] rounded-br-none' : 'bg-white rounded-bl-none'}">
-        ${!isMe ? `<p class="text-xs font-bold text-[#075e54] mb-0.5">${data.name}</p>` : ''}
-        <p class="text-sm text-gray-800">${data.text}</p>
-        <p class="text-[10px] text-gray-500 text-right mt-0.5">${data.time}</p>
-      </div>
-    `;
-    chatBox.appendChild(div);
-    chatBox.scrollTop = chatBox.scrollHeight;
+  sendBtn.onclick = kirimPesan;
+  msgInput.addEventListener('keypress', (e) => {
+    if(e.key === 'Enter') kirimPesan();
   });
 
-  // TOMBOL VC
+  // GANTI ROOM OTOMATIS
+  roomInput.addEventListener('change', joinRoom);
+  
+  // SAVE NAMA KE LOCAL
+  nameInput.addEventListener('change', () => {
+    localStorage.setItem('yowasap_name', myName());
+  });
+  roomInput.addEventListener('change', () => {
+    localStorage.setItem('yowasap_room', getRoom());
+  });
+
+  // LOAD NAMA & ROOM DARI LOCAL
+  nameInput.value = localStorage.getItem('yowasap_name') || 'Sayang';
+  roomInput.value = localStorage.getItem('yowasap_room') || 'SayangAnam123';
+
+  // TOMBOL VC - NGIKUT KODE ROOM
   document.getElementById('btnCall').onclick = () => {
-    const room = 'Yowasap-' + myName() + '-Anam'
-    window.open('https://meet.jit.si/' + room, '_blank')
+    const room = 'Yowasap-' + getRoom();
+    window.open('https://meet.jit.si/' + room, '_blank', 'noopener,noreferrer');
   }
-</script>
+
+  // JALANIN PERTAMA KALI
+  joinRoom();
 </script>
 </body>
 </html>
