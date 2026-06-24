@@ -21,14 +21,22 @@
     width: 100%;
     z-index: 10;
   }
+ .header-center {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    justify-content: center;
+    margin-left: -80px;
+  }
  .header img {
     width: 40px;
     height: 40px;
     border-radius: 50%;
     object-fit: cover;
     cursor: pointer;
+    border: 2px solid white;
   }
- .header-info { flex: 1; }
  .header-info h1 { font-size: 17px; font-weight: 500; }
  .header-info p { font-size: 12px; opacity: 0.8; }
  .header-icons { display: flex; gap: 20px; font-size: 20px; }
@@ -101,14 +109,16 @@
 <body>
 
 <div class="header">
-  <img id="headerAvatar" src="avatars/foto-grup.png" alt="avatar" onclick="gantiNama()">
-  <div class="header-info">
-    <h1>Yowasap</h1>
-    <p id="status">online</p>
+  <div class="header-center">
+    <img id="headerAvatar" src="avatars/foto-grup.png" alt="avatar" onclick="gantiNama()">
+    <div class="header-info">
+      <h1>Yowasap</h1>
+      <p id="status">online</p>
+    </div>
   </div>
   <div class="header-icons">
-    <span onclick="alert('Fitur telpon belum bisa di web sayang 😅')">📞</span>
-    <span onclick="alert('Fitur VC belum bisa di web sayang 😅')">📹</span>
+    <span onclick="bukaTelpon()">📞</span>
+    <span onclick="bukaVC()">📹</span>
     <span onclick="gantiNama()">⋮</span>
   </div>
 </div>
@@ -127,7 +137,18 @@ const AVATAR_MAP = {
   "default": "avatars/foto-grup.png"
 };
 
-// FORCE MINTA NAMA SETIAP BUKA + Kalo pencet titik 3
+// JITSI MEET AUTO ROOM - GA USAH BIKIN LINK
+function bukaVC() {
+  let room = "yowasap-anam-lina"; // Nama room kalian berdua
+  let namaUser = localStorage.getItem('nama') || "Tamu";
+  let url = `https://meet.jit.si/${room}#userInfo.displayName="${namaUser}"`;
+  window.open(url, '_blank');
+}
+
+function bukaTelpon() {
+  alert('Fitur telpon Jitsi ribet sayang 😅 Mending VC aja. Kalo mau telpon beneran pake WhatsApp asli ya');
+}
+
 function mintaNama() {
   let nama = prompt("Masukin nama kamu: Anam atau Lina");
   if(nama === "Anam" || nama === "Lina") {
@@ -142,7 +163,6 @@ function mintaNama() {
 let nama = localStorage.getItem('nama');
 if(!nama) mintaNama();
 
-// Fungsi ganti nama via titik 3
 function gantiNama() {
   localStorage.removeItem('nama');
   mintaNama();
@@ -152,7 +172,6 @@ function pasangAvatar() {
   document.getElementById('headerAvatar').src = AVATAR_MAP.default;
   document.getElementById('status').innerText = nama + " online";
   
-  // Chat contoh pertama kali
   if(document.getElementById('chat').innerHTML === "") {
     let lawan = nama === "Anam"? "Lina" : "Anam";
     document.getElementById('chat').innerHTML = `
