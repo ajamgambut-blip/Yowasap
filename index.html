@@ -8,28 +8,27 @@
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; }
   body { background: #ece5dd; height: 100vh; overflow: hidden; }
 
- .header {
+.header {
     background: #075E54;
     color: white;
     padding: 10px 16px;
     display: flex;
     align-items: center;
-    gap: 12px;
     height: 56px;
     position: fixed;
     top: 0;
     width: 100%;
     z-index: 10;
   }
- .header-center {
+
+  /* KIRI: TULISAN YOWASAP */
+.header-left {
     display: flex;
     align-items: center;
     gap: 12px;
-    flex: 1;
-    justify-content: center;
-    margin-left: -80px;
+    z-index: 2;
   }
- .header img {
+.header-left img {
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -37,32 +36,56 @@
     cursor: pointer;
     border: 2px solid white;
   }
- .header-info h1 { font-size: 17px; font-weight: 500; }
- .header-info p { font-size: 12px; opacity: 0.8; }
- .header-icons { display: flex; gap: 20px; font-size: 20px; }
- .header-icons span { cursor: pointer; }
+.header-info h1 { font-size: 17px; font-weight: 500; }
+.header-info p { font-size: 12px; opacity: 0.8; }
 
- .chat {
+  /* TENGAH: FOTO GRUP PAS DI TENGAH BENERAN */
+.header-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+  }
+.header-center img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+    cursor: pointer;
+  }
+
+  /* KAN: ICON VC TELPON */
+.header-icons {
+    margin-left: auto;
+    display: flex;
+    gap: 20px;
+    font-size: 20px;
+    z-index: 2;
+  }
+.header-icons span { cursor: pointer; }
+
+.chat {
     padding: 70px 8px 60px 8px;
     height: 100vh;
     overflow-y: auto;
     background: #ece5dd;
   }
- .bubble {
+.bubble {
     display: flex;
     align-items: flex-end;
     gap: 6px;
     margin: 8px 0;
     max-width: 75%;
   }
- .bubble.me { margin-left: auto; flex-direction: row-reverse; }
- .bubble img {
+.bubble.me { margin-left: auto; flex-direction: row-reverse; }
+.bubble img {
     width: 28px;
     height: 28px;
     border-radius: 50%;
     object-fit: cover;
   }
- .bubble.text {
+.bubble.text {
     background: white;
     padding: 8px 12px;
     border-radius: 8px;
@@ -70,9 +93,9 @@
     line-height: 1.4;
     box-shadow: 0 1px 0.5px rgba(0,0,0,.13);
   }
- .bubble.me.text { background: #DCF8C6; }
+.bubble.me.text { background: #DCF8C6; }
 
- .input-area {
+.input-area {
     position: fixed;
     bottom: 0;
     width: 100%;
@@ -82,7 +105,7 @@
     background: #f0f0f0;
     gap: 8px;
   }
- .input-area input {
+.input-area input {
     flex: 1;
     padding: 10px 14px;
     border-radius: 24px;
@@ -91,7 +114,7 @@
     font-size: 15px;
     background: white;
   }
- .input-area button {
+.input-area button {
     background: #128C7E;
     color: white;
     border: none;
@@ -109,15 +132,23 @@
 <body>
 
 <div class="header">
-  <div class="header-center">
-    <img id="headerAvatar" src="avatars/foto-grup.png" alt="avatar" onclick="gantiNama()">
+  <!-- KIRI: AVATAR + NAMA -->
+  <div class="header-left">
+    <img id="avatarKiri" src="avatars/foto-1.png" alt="avatar" onclick="gantiNama()">
     <div class="header-info">
       <h1>Yowasap</h1>
-      <p id="status">online</p>
+      <p id="status">Lina online</p>
     </div>
   </div>
+
+  <!-- TENGAH: FOTO GRUP PAS TENGAH -->
+  <div class="header-center">
+    <img id="headerAvatar" src="avatars/foto-grup.png" alt="grup" onclick="gantiNama()">
+  </div>
+
+  <!-- KAN: ICON -->
   <div class="header-icons">
-    <span onclick="bukaTelpon()">📞</span>
+    <span onclick="alert('Telpon beneran belum bisa sayang 😅')">📞</span>
     <span onclick="bukaVC()">📹</span>
     <span onclick="gantiNama()">⋮</span>
   </div>
@@ -137,16 +168,11 @@ const AVATAR_MAP = {
   "default": "avatars/foto-grup.png"
 };
 
-// JITSI MEET AUTO ROOM - GA USAH BIKIN LINK
 function bukaVC() {
-  let room = "yowasap-anam-lina"; // Nama room kalian berdua
+  let room = "Yowasap Sayang Anam 123";
   let namaUser = localStorage.getItem('nama') || "Tamu";
-  let url = `https://meet.jit.si/${room}#userInfo.displayName="${namaUser}"`;
+  let url = `https://meet.jit.si/${encodeURI(room)}#userInfo.displayName="${namaUser}"`;
   window.open(url, '_blank');
-}
-
-function bukaTelpon() {
-  alert('Fitur telpon Jitsi ribet sayang 😅 Mending VC aja. Kalo mau telpon beneran pake WhatsApp asli ya');
 }
 
 function mintaNama() {
@@ -169,11 +195,18 @@ function gantiNama() {
 }
 
 function pasangAvatar() {
+  let lawan = nama === "Anam"? "Lina" : "Anam";
+
+  // Avatar kiri = foto kita sendiri
+  document.getElementById('avatarKiri').src = AVATAR_MAP[nama];
+
+  // Tengah = foto grup
   document.getElementById('headerAvatar').src = AVATAR_MAP.default;
-  document.getElementById('status').innerText = nama + " online";
-  
+
+  // Status
+  document.getElementById('status').innerText = lawan + " online";
+
   if(document.getElementById('chat').innerHTML === "") {
-    let lawan = nama === "Anam"? "Lina" : "Anam";
     document.getElementById('chat').innerHTML = `
       <div class="bubble">
         <img class="chatAvatar" src="${AVATAR_MAP[lawan]}">
