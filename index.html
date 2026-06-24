@@ -200,9 +200,29 @@ const chatRef = db.ref('chat-anam-lina');
 let messages = [];
 const chatBox = document.getElementById('chatBox');
 const input = document.getElementById('input');
-const myName = 'Anam'; 
-const myPhoto = 'avatars/foto-1.png'; 
-const herPhoto = 'avatars/foto-2.png'; 
+const db = firebase.database();
+const chatRef = db.ref('chat-anam-lina');
+
+let messages = [];
+const chatBox = document.getElementById('chatBox');
+const input = document.getElementById('input');
+
+// AUTO DETEKSI SIAPA YG BUKA DARI LINK
+const urlParams = new URLSearchParams(window.location.search);
+const user = urlParams.get('user') || 'Anam'; // default Anam
+
+const myName = user; 
+const myPhoto = user === 'Anam' ? 'avatars/foto-1.png' : 'avatars/foto-2.png'; 
+const herPhoto = user === 'Anam' ? 'avatars/foto-2.png' : 'avatars/foto-1.png'; 
+const herName = user === 'Anam' ? 'Lina' : 'Anam';
+
+// GANTI NAMA DI HEADER JUGA
+document.querySelector('.header-left b').textContent = herName;
+document.querySelector('.header-left img').src = herPhoto;
+
+// KODE LOAD CHAT LANJUTAN DI BAWAH INI JANGAN DIHAPUS
+chatRef.once('value').then(snapshot => {
+...
 
 // LOAD SEMUA CHAT SEKALI DOANG PAS AWAL
 chatRef.once('value').then(snapshot => {
