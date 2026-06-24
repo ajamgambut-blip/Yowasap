@@ -3,100 +3,300 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Yowasap</title>
+<title>Yowasap PRO</title>
+
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#e5ddd5;height:100vh;display:flex;flex-direction:column}
-  .header{background:#075e54;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:12px}
-  .header-left{display:flex;align-items:center;gap:12px;flex:1}
-  .header-left img{width:40px;height:40px;border-radius:50%;object-fit:cover}
-  .header-left b{font-size:17px}
-  .chatBox{flex:1;overflow-y:auto;padding:20px;background:url('https://user-images.githubusercontent.com/1500684/45649791-55f7f580-bae8-11e8-82a4-6e65f6509a76.png') repeat;background-size:contain}
-  .msg{display:flex;margin-bottom:8px}
-  .msg.me{justify-content:flex-end}
-  .msg.her{justify-content:flex-start}
-  .bubble{max-width:65%;padding:8px 12px;border-radius:8px;font-size:15px;line-height:1.4;position:relative;word-wrap:break-word}
-  .me .bubble{background:#dcf8c6;border-top-right-radius:0}
-  .her .bubble{background:#fff;border-top-left-radius:0;box-shadow:0 1px 0.5px rgba(0,0,0,.13)}
-  .inputBox{display:flex;padding:10px;background:#f0f0f0;gap:8px}
-  .inputBox input{flex:1;padding:10px 14px;border:none;border-radius:20px;outline:none;font-size:15px}
-  .inputBox button{background:#075e54;color:#fff;border:none;border-radius:50%;width:48px;height:48px;cursor:pointer;font-size:20px}
+body{
+  margin:0;
+  font-family:system-ui;
+  background:#e5ddd5;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* HEADER */
+.header{
+  background:#075E54;
+  color:white;
+  padding:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+/* CHAT */
+#chatBox{
+  flex:1;
+  overflow-y:auto;
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  background-image:url("https://i.imgur.com/qLX3X5X.png");
+  background-size:300px;
+}
+
+/* MESSAGE */
+.msg{
+  max-width:75%;
+  padding:8px 10px;
+  border-radius:10px;
+  font-size:14px;
+  box-shadow:0 1px 1px rgba(0,0,0,0.1);
+}
+
+.msg.me{
+  background:#dcf8c6;
+  align-self:flex-end;
+  border-top-right-radius:0;
+}
+
+.msg.other{
+  background:white;
+  align-self:flex-start;
+  border-top-left-radius:0;
+}
+
+.time{
+  font-size:10px;
+  color:#667781;
+  float:right;
+}
+
+/* INPUT */
+.input{
+  display:flex;
+  padding:8px;
+  background:#f0f0f0;
+  gap:8px;
+}
+
+input{
+  flex:1;
+  padding:10px;
+  border:none;
+  border-radius:20px;
+}
+
+button{
+  border:none;
+  background:#075E54;
+  color:white;
+  border-radius:50%;
+  width:42px;
+  height:42px;
+}
 </style>
 </head>
+
 <body>
 
 <div class="header">
-  <div class="header-left">
-    <img src="avatars/foto-2.png" alt="foto">
-    <b>Lina</b>
-  </div>
+  <div>💬 Yowasap PRO</div>
+  <button onclick="startCall()">📞</button>
 </div>
 
-<div class="chatBox" id="chatBox"></div>
+<div id="chatBox"></div>
 
-<div class="inputBox">
-  <input type="text" id="input" placeholder="Ketik pesan...">
-  <button onclick="sendMessage()">➤</button>
+<div class="input">
+  <input id="input" placeholder="Ketik pesan...">
+  <button onclick="send()">➤</button>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <script>
-// 1. CONFIG FIREBASE KAMU - GANTI INI
+/* ================= FIREBASE ================= */
 const firebaseConfig = {
-  apiKey: "AIzaSyCZHdGHSMBT8g8xs2H78yhDx0dbEv2H0xg",
-  authDomain: "yowasap.firebaseapp.com",
-  databaseURL: "https://yowasap-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "yowasap",
-  storageBucket: "yowasap.firebasestorage.app",
-  messagingSenderId: "964491262310",
-  appId: "1:964491262310:web:086e5f2cbf0af8398870a7"
+  apiKey: "YOUR_KEY",
+  authDomain: "YOUR_DOMAIN",
+  databaseURL: "YOUR_DB_URL",
+  projectId: "YOUR_PROJECT",
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const chatRef = db.ref('chat-anam-lina');
 
-// 2. AUTO DETEKSI SIAPA YG BUKA
-const urlParams = new URLSearchParams(window.location.search);
-const user = urlParams.get('user') || 'Anam';
+/* ================= USER ================= */
+let myId;
+let roomId = prompt("Room ID") || "default-room";
 
-const myName = user; 
-const myPhoto = user === 'Anam' ? 'avatars/foto-1.png' : 'avatars/foto-2.png'; 
-const herPhoto = user === 'Anam' ? 'avatars/foto-2.png' : 'avatars/foto-1.png'; 
-const herName = user === 'Anam' ? 'Lina' : 'Anam';
-
-const chatBox = document.getElementById('chatBox');
-const input = document.getElementById('input');
-
-// 3. GANTI HEADER SETELAH HTML LOAD
-document.addEventListener('DOMContentLoaded', function() {
-  document.querySelector('.header-left b').textContent = herName;
-  document.querySelector('.header-left img').src = herPhoto;
+firebase.auth().signInAnonymously().then(u=>{
+  myId = u.user.uid;
+  initChat();
+  listenCall();
 });
 
-// 4. LOAD PESAN
-chatRef.on('child_added', snapshot => {
-  const msg = snapshot.val();
-  const div = document.createElement('div');
-  div.className = 'msg ' + (msg.name === myName ? 'me' : 'her');
-  div.innerHTML = `<div class="bubble">${msg.text}</div>`;
-  chatBox.appendChild(div);
-  chatBox.scrollTop = chatBox.scrollHeight;
-});
+/* ================= CHAT ================= */
+const chatRef = db.ref("chats/"+roomId+"/messages");
+const chatBox = document.getElementById("chatBox");
 
-// 5. KIRIM PESAN
-function sendMessage() {
-  const text = input.value.trim();
-  if(text === '') return;
-  chatRef.push({name: myName, text: text});
-  input.value = '';
+function send(){
+  let text = document.getElementById("input").value;
+  if(!text.trim()) return;
+
+  chatRef.push({
+    text,
+    senderId: myId,
+    time: Date.now()
+  });
+
+  document.getElementById("input").value="";
 }
 
-input.addEventListener('keypress', e => {
-  if(e.key === 'Enter') sendMessage();
-});
+function render(msg){
+  const div = document.createElement("div");
+  div.className = "msg " + (msg.senderId===myId ? "me":"other");
+
+  let t = new Date(msg.time).toLocaleTimeString([],{
+    hour:"2-digit",minute:"2-digit"
+  });
+
+  div.innerHTML = `
+    ${msg.text}
+    <span class="time">${t}</span>
+  `;
+
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function initChat(){
+  chatRef.on("child_added", snap=>{
+    render(snap.val());
+  });
+}
+
+/* ================= CALL SYSTEM ================= */
+const callRef = db.ref("calls/"+roomId);
+
+/* ringtone */
+const ring = new Audio("https://actions.google.com/sounds/v1/alarms/phone_alerts_and_rings.ogg");
+ring.loop = true;
+
+/* START CALL */
+function startCall(){
+  const room = "call_"+roomId;
+
+  callRef.set({
+    from: myId,
+    status: "ringing",
+    room
+  });
+}
+
+/* LISTEN CALL */
+function listenCall(){
+  callRef.on("value", snap=>{
+    const c = snap.val();
+    if(!c) return;
+
+    if(c.status==="ringing" && c.from!==myId){
+      showIncoming(c.room);
+    }
+
+    if(c.status==="accepted"){
+      ring.pause();
+      openCall(c.room);
+    }
+
+    if(c.status==="ended"){
+      closeCall();
+    }
+  });
+}
+
+/* INCOMING UI */
+function showIncoming(room){
+  ring.play();
+
+  if(document.getElementById("inc")) return;
+
+  const box = document.createElement("div");
+  box.id="inc";
+  box.style=`
+    position:fixed;inset:0;
+    background:#075E54;
+    color:white;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+  `;
+
+  box.innerHTML=`
+    <h2>📞 Incoming Call</h2>
+    <button onclick="accept('${room}')">Accept</button>
+    <button onclick="reject()">Reject</button>
+  `;
+
+  document.body.appendChild(box);
+}
+
+/* ACCEPT */
+function accept(room){
+  callRef.update({status:"accepted"});
+  ring.pause();
+  openCall(room);
+}
+
+/* REJECT */
+function reject(){
+  ring.pause();
+  callRef.update({status:"ended"});
+  document.getElementById("inc")?.remove();
+}
+
+/* CALL UI */
+let timer,sec=0;
+
+function openCall(room){
+  const ui=document.createElement("div");
+  ui.id="callUI";
+  ui.style=`
+    position:fixed;inset:0;background:black;z-index:9999;
+  `;
+
+  ui.innerHTML=`
+    <iframe src="https://meet.jit.si/${room}"
+      style="width:100%;height:100%;border:0"></iframe>
+
+    <button onclick="endCall()"
+      style="position:absolute;bottom:20px;left:50%;
+      transform:translateX(-50%);
+      background:red;color:white;padding:12px;border-radius:50%;">
+      END
+    </button>
+
+    <div id="t" style="position:absolute;top:20px;left:20px;color:white;">
+      00:00
+    </div>
+  `;
+
+  document.body.appendChild(ui);
+
+  sec=0;
+  timer=setInterval(()=>{
+    sec++;
+    let m=String(Math.floor(sec/60)).padStart(2,"0");
+    let s=String(sec%60).padStart(2,"0");
+    document.getElementById("t").innerText=m+":"+s;
+  },1000);
+}
+
+/* END CALL */
+function endCall(){
+  clearInterval(timer);
+  callRef.update({status:"ended"});
+  document.getElementById("callUI")?.remove();
+  document.getElementById("inc")?.remove();
+}
 </script>
+
 </body>
 </html>
