@@ -2,156 +2,169 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Yowasap</title>
-<meta name="theme-color" content="#075e54">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
-<script src="https://cdn.tailwindcss.com"></script>
 <style>
-  body { height: 100dvh; }
-.chat-bg {
-    background-color: #e5ddd5;
-    background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns=http://www.w3.org/2000/svg%3E%3Cg fill='%239C92AC' fill-opacity='0.08'%3E%3Ccircle cx='40' cy='40' r='1'/%3E%3C/g%3E%3C/svg%3E");
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+  body { background: #e5ddd5; }
+
+  /* HEADER IJO + FOTO COUPLE */
+ .header {
+    background: #128C7E;
+    color: white;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+  }
+ .header img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+  }
+ .header h1 { font-size: 18px; }
+
+  /* CHAT AREA */
+ .chat {
+    padding: 10px;
+    height: calc(100vh - 120px);
+    overflow-y: auto;
+  }
+ .bubble {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    margin: 8px 0;
+    max-width: 70%;
+  }
+ .bubble.me { margin-left: auto; flex-direction: row-reverse; }
+ .bubble img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+ .bubble.text {
+    background: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+ .bubble.me.text { background: #DCF8C6; }
+
+  /* INPUT */
+ .input-area {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    padding: 8px;
+    background: #f0f0f0;
+    gap: 6px;
+  }
+ .input-area input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 20px;
+    border: none;
+    outline: none;
+  }
+ .input-area button {
+    background: #128C7E;
+    color: white;
+    border: none;
+    padding: 0 16px;
+    border-radius: 50%;
+    font-size: 18px;
   }
 </style>
 </head>
-<body class="flex flex-col bg-[#e5ddd5]">
+<body>
 
-  <!-- HEADER -->
-  <div class="bg-[#075e54] text-white p-3 flex items-center gap-3 shadow-md flex-shrink-0">
-    <div class="flex-1">
-      <h1 class="font-medium text-base">Yowasap</h1>
-      <p id="roomStatus" class="text-xs opacity-80">Room: belum dipilih</p>
-      <p id="typingStatus" class="text-xs opacity-70 italic hidden">Sedang mengetik...</p>
-    </div>
-    <button id="btnCall" class="p-2 hover:bg-[#128c7e] rounded-full active:scale-95"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-VC</button>
+<!-- HEADER: FOTO COUPLE OTOMATIS -->
+<div class="header">
+  <img id="headerAvatar" src="avatars/foto-grup.png" alt="avatar">
+  <h1>Yowasap</h1>
+</div>
+
+<!-- CHAT CONTOH -->
+<div class="chat" id="chat">
+  <div class="bubble">
+    <img class="chatAvatar" src="">
+    <div class="text">Halo sayang 😊</div>
   </div>
-
-  <!-- SETTING -->
-  <div class="bg-white/95 backdrop-blur px-3 py-2 flex-col gap-2 flex-shrink-0">
-    <div class="flex items-center gap-2">
-      <span class="text-sm text-gray-600 w-20">Nama</span>
-      <input id="nameInput" class="flex-1 text-sm bg-gray-100 rounded-lg px-2 py-1 outline-none" value="Anam">
-    </div>
-    <div class="flex items-center gap-2">
-      <span class="text-sm text-gray-600 w-20">Kode Room</span>
-      <input id="roomInput" class="flex-1 text-sm bg-gray-100 rounded-lg px-2 py-1 outline-none font-mono" value="MenujuHalal">
-    </div>
+  <div class="bubble me">
+    <img class="chatAvatar" src="">
+    <div class="text">Iya kamu lagi ngapain?</div>
   </div>
+</div>
 
-  <!-- CHAT -->
-  <div id="chatBox" class="flex-1 overflow-y-auto p-3 space-y-0.5 chat-bg"></div>
+<!-- INPUT CHAT -->
+<div class="input-area">
+  <input type="text" id="inputText" placeholder="Ketik pesan...">
+  <button onclick="kirim()">➤</button>
+</div>
 
-  <!-- INPUT TEKS DOANG -->
-  <div class="p-2 bg-[#f0f0f0] flex items-end gap-2 flex-shrink-0">
-    <input id="msgInput" class="flex-1 bg-white rounded-full px-4 py-2 text-sm outline-none" placeholder="Ketik pesan...">
-    <button id="sendBtn" class="bg-[#25D366] p-2.5 rounded-full active:scale-95">➤</button>
-  </div>
+<script>
+// ===== SETTING AVATAR =====
+const AVATAR_MAP = {
+  "Anam": "avatars/foto-1.png", // foto kamu
+  "Lina": "avatars/foto-2.png", // foto Lina
+  "default": "avatars/foto-grup.png" // foto couple header
+};
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, push, onChildAdded, off, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+// Ambil nama dari localStorage, kalo belum ada suruh input
+let nama = localStorage.getItem('nama');
+if(!nama) {
+  nama = prompt("Masukin nama kamu: Anam atau Lina");
+  localStorage.setItem('nama', nama);
+}
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCZHdGHSMBT8g8xs2H78yhDx0dbEv2H0xg",
-    authDomain: "yowasap.firebaseapp.com",
-    databaseURL: "https://yowasap-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "yowasap",
-    storageBucket: "yowasap.firebasestorage.app",
-    messagingSenderId: "964491262310",
-    appId: "1:964491262310:web:086e5f2cbf0af8398870a7"
-  };
+// Pasang avatar header + avatar bubble sesuai nama
+function pasangAvatar() {
+  document.getElementById('headerAvatar').src = AVATAR_MAP.default;
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-
-  const chatBox = document.getElementById('chatBox');
-  const msgInput = document.getElementById('msgInput');
-  const sendBtn = document.getElementById('sendBtn');
-  const nameInput = document.getElementById('nameInput');
-  const roomInput = document.getElementById('roomInput');
-  const roomStatus = document.getElementById('roomStatus');
-  const typingStatus = document.getElementById('typingStatus');
-
-  let chatRef, typingRef;
-  let currentRoom = '';
-  const seenMessages = new Set();
-  let typingTimeout;
-
-  function myName() { return nameInput.value.trim() || 'Aku'; }
-  function getRoom() { return roomInput.value.trim().replace(/[^a-zA-Z0-9]/g, '') || 'default'; }
-
-  function addMessage(key, data) {
-    if(seenMessages.has(key)) return;
-    seenMessages.add(key);
-    const isMe = data.name === myName();
-    if(chatBox.children.length === 1 && chatBox.children[0].innerText.includes('Masuk ke room')) chatBox.innerHTML = '';
-
-    const div = document.createElement('div');
-    div.className = `flex ${isMe? 'justify-end' : 'justify-start'} mb-1`;
-    div.innerHTML = `
-      <div class="max-w-[75%] px-3 py-2 rounded-lg shadow-sm ${isMe? 'bg-[#dcf8c6] rounded-br-none' : 'bg-white rounded-bl-none'}">
-        ${!isMe? `<p class="text-xs font-bold text-[#075e54] mb-0.5">${data.name}</p>` : ''}
-        <p class="text-sm text-gray-800 break-words">${data.text}</p>
-        <p class="text-[10px] text-gray-500 text-right mt-0.5">${data.time}</p>
-      </div>
-    `;
-    chatBox.appendChild(div);
-    chatBox.scrollTop = chatBox.scrollHeight;
-  }
-
-  function joinRoom() {
-    const newRoom = getRoom();
-    if(newRoom === currentRoom) return;
-    if(chatRef) off(chatRef);
-    if(typingRef) off(typingRef);
-
-    currentRoom = newRoom;
-    roomStatus.innerText = 'Room: ' + currentRoom;
-    chatBox.innerHTML = `<div class="text-center text-xs text-gray-500 mt-10">Masuk ke room: ${currentRoom}</div>`;
-    seenMessages.clear();
-
-    chatRef = ref(db, 'rooms/' + currentRoom + '/chat');
-    typingRef = ref(db, 'rooms/' + currentRoom + '/typing/' + myName());
-
-    onChildAdded(chatRef, (snapshot) => addMessage(snapshot.key, snapshot.val()));
-
-    // LISTEN TYPING ORANG LAIN
-    onValue(ref(db, 'rooms/' + currentRoom + '/typing'), (snap) => {
-      const data = snap.val() || {};
-      const otherTyping = Object.keys(data).find(n => n!== myName() && data[n]);
-      typingStatus.classList.toggle('hidden',!otherTyping);
-      typingStatus.innerText = otherTyping? `${otherTyping} sedang mengetik...` : '';
-    });
-  }
-
-  function kirimPesan() {
-    const text = msgInput.value.trim();
-    if(text === '' ||!chatRef) return;
-    push(chatRef, { name: myName(), text: text, time: new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) });
-    msgInput.value = '';
-    set(typingRef, false);
-  }
-
-  // TYPING INDICATOR
-  msgInput.addEventListener('input', () => {
-    if(!typingRef) return;
-    set(typingRef, true);
-    clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => set(typingRef, false), 3000);
+  document.querySelectorAll('.chatAvatar').forEach(img => {
+    // Kalo bubble punya class "me" = kamu, selain itu = dia
+    let bubble = img.closest('.bubble');
+    if(bubble.classList.contains('me')) {
+      img.src = AVATAR_MAP[nama] || AVATAR_MAP.default;
+    } else {
+      let namaLawan = nama === "Anam"? "Lina" : "Anam";
+      img.src = AVATAR_MAP[namaLawan] || AVATAR_MAP.default;
+    }
   });
+}
 
-  sendBtn.onclick = kirimPesan;
-  msgInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') kirimPesan(); });
-  roomInput.addEventListener('blur', joinRoom);
+// Kirim chat baru
+function kirim() {
+  let text = document.getElementById('inputText').value;
+  if(text.trim() === "") return;
 
-  nameInput.value = localStorage.getItem('yowasap_name') || 'Anam';
-  roomInput.value = localStorage.getItem('yowasap_room') || 'MenujuHalal';
-  document.getElementById('btnCall').onclick = () => window.location.href = 'https://meet.jit.si/Yowasap-' + getRoom();
+  let chat = document.getElementById('chat');
+  let bubble = document.createElement('div');
+  bubble.className = 'bubble me';
+  bubble.innerHTML = `
+    <img class="chatAvatar" src="${AVATAR_MAP[nama]}">
+    <div class="text">${text}</div>
+  `;
+  chat.appendChild(bubble);
+  document.getElementById('inputText').value = '';
+  chat.scrollTop = chat.scrollHeight;
+}
 
-  joinRoom();
+// Jalanin pas halaman load
+pasangAvatar();
+
+// Enter buat kirim
+document.getElementById('inputText').addEventListener('keypress', e => {
+  if(e.key === 'Enter') kirim();
+});
 </script>
+
 </body>
 </html>
