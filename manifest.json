@@ -1,19 +1,20 @@
 {
-  "name": "Yowasap",
-  "short_name": "Yowasap",
-  "start_url": ".",
+  "name": "Chat Lina & Anam",
+  "short_name": "LinaAnam",
+  "start_url": "chat.html?user=lina",
   "display": "standalone",
-  "background_color": "#000",
-  "theme_color": "#075E54",
+  "background_color": "#0b141a",
+  "theme_color": "#128c7e",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "icon-192.png",
-      "sizes": "192x192",
+      "src": "icon-152.png",
+      "sizes": "152x152",
       "type": "image/png"
     },
     {
-      "src": "icon-512.png",
-      "sizes": "512x512",
+      "src": "icon-192.png",
+      "sizes": "192x192",
       "type": "image/png"
     }
   ]
