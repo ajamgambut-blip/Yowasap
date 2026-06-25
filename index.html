@@ -97,13 +97,15 @@ signInAnonymously(auth).then(() => {
   console.error(e);
 });
 
-const chatRef = ref(db, 'rooms/' + roomId + '/messages');
-
-onChildAdded(chatRef, (snapshot) => {
-  const data = snapshot.val();
-  if (!data) return;
+db.ref('rooms/' + roomId + '/messages').on('child_added', snap => {
+  const data = snap.val();
+  if(!data) return;
+  
   const div = document.createElement('div');
+  // INI KUNCINYA: kalo data.user sama kayak user di URL = kanan ijo
+  // kalo beda = kiri abu2
   div.className = 'bubble ' + (data.user === user ? 'me' : 'her');
+  
   div.innerHTML = data.text + `<span class="time">${data.time}</span>`;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
