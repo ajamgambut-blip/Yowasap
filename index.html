@@ -20,6 +20,9 @@
   #input{flex:1;padding:10px;border:none;border-radius:8px;background:#2a3942;color:white;outline:none}
   #sendBtn{background:#128c7e;border:none;padding:0 20px;border-radius:8px;color:white;font-weight:bold;cursor:pointer}
 </style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#128c7e">
+<link rel="apple-touch-icon" href="icon-192.png">
 </head>
 <body>
 
@@ -129,10 +132,23 @@ signInAnonymously(auth).then(() => {
       if (el) el.querySelector('.ticks').innerHTML = '✓';
     }
 
-    if (data.sender !== user && document.hidden && Notification.permission === 'granted') {
-      new Notification(herName + ' kirim pesan', { body: data.text, icon: herPhoto });
+    if (data.sender !== user && document.hidden) {
+  // Minta izin dulu kalo belum pernah
+  if (Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+  
+  // Tunggu 0.5 detik baru munculin notif
+  setTimeout(() => {
+    if (Notification.permission === 'granted') {
+      new Notification(herName + ' 💌', {
+        body: data.text,
+        icon: herPhoto,
+        tag: 'chat-lina-anam'
+      });
     }
-  });
+  }, 500);
+}
 
   btn.onclick = () => {
     const text = input.value.trim();
@@ -148,9 +164,15 @@ signInAnonymously(auth).then(() => {
   
   // 5. TELPON JITSI
   document.getElementById('callBtn').onclick = () => {
-    window.open(`https://meet.jit.si/${roomId}`, '_blank');
-  };
+  location.href = `https://meet.jit.si/${roomId}`;
+};
 });
+// Daftarin Service Worker buat PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(() => {
+    console.log('SW terdaftar!');
+  });
+}
 </script>
 </body>
 </html>
