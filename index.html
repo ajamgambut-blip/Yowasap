@@ -26,6 +26,7 @@ header img { width:40px; height:40px; border-radius:50% }
 <header>
   <img id="herPhoto" src="">
   <div><h3 id="herName">Lina</h3><p>Online</p></div>
+  <button id="callBtn" style="margin-left:auto; background:#00a884; border:none; border-radius:50%; width:40px; height:40px; font-size:20px; cursor:pointer">📞</button>
 </header>
 <div class="chat" id="chat"></div>
 <div class="input-area">
@@ -46,35 +47,62 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const auth = firebase.auth();
+// 1. Ambil user dari URL ?user=anam atau ?user=lina
+const urlParams = new URLSearchParams(window.location.search);
+const user = urlParams.get('user') || 'anam';
 
-const url = new URLSearchParams(location.search);
-const user = (url.get('user') || 'anam').toLowerCase();
-const roomId = url.get('room') || 'default';
+// 2. Room ID biar chat kalian nyambung
+const roomId = 'pacar-lina-anam';
 
+// 3. Nama + Foto - UDAH AKU ISI
 const herName = user === 'anam' ? 'Lina' : 'Anam';
-const herPhoto = user === 'anam' ? 'https://i.imgur.com/jUHiNC4.jpg' : 'https://i.imgur.com/FLFN9ax.png';
+const herPhoto = user === 'anam' 
+  ? 'https://i.imgur.com/BgaNlVM.jpeg'  // Foto Lina buat Anam
+  : 'https://i.imgur.com/wfPOwQN.jpeg'; // Foto Anam buat Lina
 
+const chat = document.getElementById('chat');
+const input = document.getElementById('input');
+const btn = document.getElementById('sendBtn');
+
+// 4. Isi ke header atas
 document.getElementById('herName').textContent = herName;
 document.getElementById('herPhoto').src = herPhoto;
 
-const chat = document.getElementById('chat');
-const input = document.getElementById('msgInput');
-const btn = document.getElementById('sendBtn');
+// 1. Login anonim dulu, nunggu berhasil baru jalanin chat + notif
+auth.signInAnonymously().then(() => {
 
-auth.signInAnonymously();
+  // 2. Listener buat nampilin chat kiri-kanan
+  db.ref('rooms/' + roomId + '/messages').on('child_added', snap => {
+    const data = snap.val();
+    if(!data) return;
+    const div = document.createElement('div');
+    div.className = 'bubble ' + (data.user === user ? 'me' : 'her');
+    div.innerHTML = data.text + `<span class="time">${data.time}</span>`;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  });
 
-db.ref('rooms/' + roomId + '/messages').on('child_added', snap => {
-  const data = snap.val();
-  if(!data) return;
-  const div = document.createElement('div');
-  div.className = 'bubble ' + (data.user === user ? 'me' : 'her');
-  div.innerHTML = data.text + `<span class="time">${data.time}</span>`;
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-});
+  // 3. Minta izin notifikasi pas pertama buka
+  if ('Notification' in window && Notification.permission !== 'granted') {
+    Notification.requestPermission();
+  }
 
+  // 4. Listener buat notif kalo tab lagi ketutup
+  db.ref('rooms/' + roomId + '/messages').on('child_added', snap => {
+    const data = snap.val();
+    if(!data || data.user === user) return;
+    
+    if (document.hidden && Notification.permission === 'granted') {
+      new Notification(herName + ' kirim pesan', {
+        body: data.text,
+        icon: herPhoto
+      });
+    }
+  });
+
+}); // 👈 TUTUP .then() SAMPE SINI AJA
+
+// 5. Function kirim pesan - taro di luar .then
 function sendMsg() {
   const text = input.value.trim();
   if(!text) return;
@@ -83,6 +111,13 @@ function sendMsg() {
   input.value = '';
 }
 
+// 6. Tombol VC - taro paling bawah
+document.getElementById('callBtn').onclick = () => {
+  const jitsiRoom = 'Yowasap-' + roomId + '-' + user;
+  window.open('https://meet.jit.si/' + jitsiRoom, '_blank');
+}
+
+// 7. Event tombol kirim + enter
 btn.onclick = sendMsg;
 input.addEventListener('keypress', e => { if(e.key==='Enter') sendMsg(); });
 </script>
