@@ -50,9 +50,12 @@
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 5px; }
+        /* KODE HP FULL LAYAR */
+    @media (max-width: 768px) { #sidebar { display: none !important; } }
+</style>  <-- BARIS 53
     </style>
 </head>
-<body class="bg-gray-100 font-sans h-screen flex justify-center items-center">
+<body id="main-screen" class="bg-gray-100 font-sans h-screen flex
 
     <!-- Screen Login / Pilih User -->
     <div id="login-screen" class="bg-white p-8 rounded-lg shadow-md w-full max-w-sm text-center">
@@ -68,7 +71,7 @@
     <div id="main-screen" class="hidden w-full h-full max-w-5xl bg-white shadow-2xl flex rounded-none md:rounded-lg overflow-hidden">
         
         <!-- Sidebar Kiri -->
-        <div class="w-1/3 border-r border-gray-200 flex flex-col bg-white">
+        <div id="sidebar" class="w-1/3 border-r border-gray-2...
             <!-- Header Profil Kita -->
             <div class="bg-gray-100 p-4 flex justify-between items-center border-b">
                 <div class="flex items-center space-x-3">
