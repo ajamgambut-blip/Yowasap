@@ -1,6 +1,6 @@
 {
   "name": "Yowasap",
-  "short_name": "LinaAnam",
+  "short_name": "Yowasap",
   "start_url": "index.html?user=lina",
   "display": "standalone",
   "background_color": "#0b141a",
