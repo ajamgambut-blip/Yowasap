@@ -3,171 +3,305 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Clone PWA</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#075E54">
-    
-    <!-- LINK TAILWIND PLAY CDN UTUH UNTUK MEMASTIKAN DESAIN LOAD 100% -->
-    <script src="https://jsdelivr.net"></script>
+    <title>Yowasap</title>
+    <!-- Tailwind CSS untuk UI yang Proporsional & Halus -->
+    <script src="https://tailwindcss.com"></script>
+    <!-- FontAwesome untuk Ikon Keren -->
     <link rel="stylesheet" href="https://cloudflare.com">
     
+    <!-- Konfigurasi PWA via Data URI -->
+    <script>
+        const manifest = {
+            "name": "Yowasap Messenger",
+            "short_name": "Yowasap",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#0b141a",
+            "theme_color": "#00a884",
+            "icons": [
+                {
+                    "src": "https://flaticon.com",
+                    "sizes": "512x512",
+                    "type": "image/png"
+                }
+            ]
+        };
+        const stringManifest = JSON.stringify(manifest);
+        const blob = new Blob([stringManifest], {type: 'application/json'});
+        const manifestURL = URL.createObjectURL(blob);
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = manifestURL;
+        document.head.appendChild(link);
+    </script>
+
     <style>
-        /* CSS Murni Cadangan Jika CDN Mengalami Kendala */
-        body { margin: 0; padding: 0; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; background-color: #f0f2f5; }
+        /* Background Halus Khas WhatsApp */
         .chat-bg {
             background-color: #efeae2;
             background-image: url('https://githubusercontent.com');
+            background-repeat: repeat;
             background-blend-mode: overlay;
             opacity: 0.95;
         }
-        /* Memaksa Login Screen Menutupi Layar Penuh Tanpa Tergantung Tailwind */
-        #login-screen {
-            position: fixed !important;
-            top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
-            background-color: #00a884 !important;
-            z-index: 99999 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-            padding: 16px !important;
-        }
-        .login-box { background: white; padding: 32px; border-radius: 8px; max-width: 360px; width: 100%; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .login-btn { background-color: #00a884; color: white; padding: 12px; width: 100%; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 12px; }
-        .login-input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 5px; }
     </style>
 </head>
-<body>
+<body class="bg-gray-100 font-sans h-screen flex justify-center items-center">
 
-    <!-- LOGIN SCREEN -->
-    <div id="login-screen">
-        <div class="login-box">
-            <i class="fab fa-whatsapp text-6xl text-green-500 mb-4" style="font-size: 4rem; color: #25d366; margin-bottom: 1rem;"></i>
-            <h2 class="text-2xl font-bold mb-4 text-gray-800" style="font-size: 1.5rem; margin-bottom: 1rem;">Masuk ke WA Clone</h2>
-            <input type="text" id="username-input" class="login-input" placeholder="Masukkan Nama Anda...">
-            <button onclick="loginUser()" class="login-btn">Mulai Chatting</button>
+    <!-- Screen Login / Pilih User -->
+    <div id="login-screen" class="bg-white p-8 rounded-lg shadow-md w-full max-w-sm text-center">
+        <h1 class="text-3xl font-bold text-emerald-600 mb-6"><i class="fab fa-whatsapp mr-2"></i>Yowasap</h1>
+        <p class="text-gray-500 mb-4 text-sm">Masuk sebagai salah satu user untuk simulasi chat:</p>
+        <div class="space-y-3">
+            <button onclick="loginAs('User1', 'Anam')" class="w-full bg-emerald-600 text-white py-2 rounded shadow hover:bg-emerald-700 transition">Masuk sebagai Anam (User 1)</button>
+            <button onclick="loginAs('User2', 'Lina')" class="w-full bg-blue-600 text-white py-2 rounded shadow hover:bg-blue-700 transition">Masuk sebagai Lina (User 2)</button>
         </div>
     </div>
 
-    <!-- MAIN APP SCREEN -->
-    <div class="flex h-full w-full flex-row">
-        <!-- Sidebar -->
-        <div class="w-1/3 md:w-1/4 bg-white border-r flex flex-col h-full">
-            <div class="bg-gray-200 p-3 flex justify-between items-center border-b flex-row">
-                <div class="relative flex items-center">
-                    <img id="my-avatar" src="https://unsplash.com" class="w-10 h-10 rounded-full object-cover border" alt="Profile" style="width:40px; height:40px; border-radius:50%;">
-                    <label for="upload-avatar" class="absolute inset-0 bg-black bg-opacity-40 rounded-full flex items-center justify-center text-white text-xs opacity-0 hover:opacity-100 transition cursor-pointer">
-                        <i class="fas fa-camera"></i>
-                    </label>
-                    <input type="file" id="upload-avatar" class="hidden" accept="image/*" onchange="changeProfilePic(event)">
-                </div>
-                <div class="flex space-x-4 text-gray-600 text-lg flex-row gap-3">
-                    <button id="pwa-install-btn" class="hidden text-green-600"><i class="fas fa-download"></i></button>
-                    <i class="fas fa-comment-alt"></i>
-                    <i class="fas fa-ellipsis-v"></i>
-                </div>
-            </div>
-            <!-- Daftar Kontak Aktif -->
-            <div class="flex-1 overflow-y-auto" id="users-list">
-                <div class="p-4 text-center text-gray-500 text-sm">Mencari pengguna lain...</div>
-            </div>
-        </div>
-
-        <!-- Chat Window -->
-        <div class="flex-1 flex flex-col h-full bg-gray-200">
-            <!-- Header Chat -->
-            <div class="bg-gray-200 p-3 flex justify-between items-center shadow-sm z-10 border-b flex-row">
-                <div class="flex items-center space-x-3 flex-row gap-2">
-                    <img id="chat-active-avatar" src="https://placeholder.com" class="w-10 h-10 rounded-full object-cover" style="width:40px; height:40px; border-radius:50%;">
+    <!-- Screen Utama Chat -->
+    <div id="main-screen" class="hidden w-full h-full max-w-5xl bg-white shadow-2xl flex rounded-none md:rounded-lg overflow-hidden">
+        
+        <!-- Sidebar Kiri -->
+        <div class="w-1/3 border-r border-gray-200 flex flex-col bg-white">
+            <!-- Header Profil Kita -->
+            <div class="bg-gray-100 p-4 flex justify-between items-center border-b">
+                <div class="flex items-center space-x-3">
+                    <div class="relative group">
+                        <img id="my-avatar" src="https://placeholder.com" class="w-10 h-10 rounded-full object-cover border">
+                        <label class="absolute inset-0 bg-black bg-opacity-40 rounded-full flex items-center justify-center text-white text-xs opacity-0 group-hover:opacity-100 cursor-pointer transition">
+                            <i class="fas fa-camera"></i>
+                            <input type="file" id="upload-avatar" accept="image/*" class="hidden" onchange="changeAvatar(this)">
+                        </label>
+                    </div>
                     <div>
-                        <h3 id="chat-active-name" class="font-semibold text-gray-800 text-sm md:text-base">Pilih Kontak</h3>
-                        <p id="chat-active-status" class="text-xs text-gray-500">Pilih teman di kiri</p>
+                        <h2 id="my-name" class="font-semibold text-sm text-gray-800">Nama</h2>
+                        <span class="text-xs text-emerald-600 font-medium">Online</span>
                     </div>
                 </div>
-                <div class="flex space-x-4 text-gray-600 text-lg pr-2 flex-row gap-3">
-                    <button onclick="startVideoCall()" class="hover:text-green-600"><i class="fas fa-video"></i></button>
-                    <i class="fas fa-search"></i>
-                </div>
+                <button onclick="logout()" class="text-gray-500 hover:text-red-500"><i class="fas fa-sign-out-alt"></i></button>
             </div>
 
-            <!-- Area Isi Pesan -->
-            <div id="chat-box" class="flex-1 chat-bg p-4 overflow-y-auto flex flex-col space-y-2">
-                <div class="m-auto text-center bg-white bg-opacity-90 p-4 rounded-lg shadow text-gray-600 max-w-xs" style="margin: auto; background: white; padding: 15px; border-radius: 8px; text-align: center;">
-                    <i class="fab fa-whatsapp text-4xl text-green-500 mb-2" style="font-size: 2.5rem; color:#25d366;"></i>
-                    <p class="text-sm font-semibold">WhatsApp Clone</p>
-                    <p class="text-xs mt-1">Pilih teman di daftar kiri untuk mulai berkirim pesan secara realtime.</p>
+            <!-- Daftar Chat (Daftar Pengguna Lain) -->
+            <div class="flex-1 overflow-y-auto">
+                <div onclick="selectTargetChat()" id="target-user-item" class="p-4 flex items-center space-x-3 hover:bg-gray-50 cursor-pointer bg-gray-100 transition">
+                    <img id="target-avatar" src="https://placeholder.com" class="w-12 h-12 rounded-full object-cover">
+                    <div class="flex-1">
+                        <div class="flex justify-between items-baseline">
+                            <h3 id="target-name" class="font-medium text-gray-900">Target User</h3>
+                            <span id="target-status-badge" class="text-xs text-gray-400">Offline</span>
+                        </div>
+                        <p id="target-typing-status" class="text-xs text-gray-500 italic mt-1"></p>
+                    </div>
                 </div>
-            </div>
-
-            <!-- Input Pesan -->
-            <div class="bg-gray-200 p-3 flex items-center space-x-3 border-t flex-row gap-2">
-                <input type="text" id="message-input" oninput="notifyTyping()" placeholder="Ketik pesan..." class="flex-1 p-2 bg-white rounded-lg focus:outline-none text-sm shadow-sm" style="width:80%; padding: 8px; border-radius: 6px; border:none;">
-                <button onclick="sendMessage()" class="bg-green-500 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-green-600 transition shadow" style="width:40px; height:40px; background:#00a884; border-radius:50%; border:none; color:white; cursor:pointer;">
-                    <i class="fas fa-paper-plane text-sm"></i>
-                </button>
             </div>
         </div>
+
+        <!-- Ruang Chat Kanan -->
+        <div class="w-2/3 flex flex-col bg-slate-100">
+            <!-- Header Ruang Chat -->
+            <div class="bg-gray-100 p-4 flex justify-between items-center border-b border-gray-200">
+                <div class="flex items-center space-x-3">
+                    <img id="chat-header-avatar" src="https://placeholder.com" class="w-10 h-10 rounded-full object-cover">
+                    <div>
+                        <h3 id="chat-header-name" class="font-semibold text-gray-800">Target User</h3>
+                        <p id="chat-header-status" class="text-xs text-gray-500">Offline</p>
+                    </div>
+                </div>
+                <!-- Tombol Telepon / Video Call Jitsi -->
+                <div class="flex space-x-4 text-gray-600 text-lg mr-2">
+                    <button onclick="startVideoCall()" class="hover:text-emerald-600 transition p-2" title="Mulai Video Call via Jitsi"><i class="fas fa-video"></i></button>
+                </div>
+            </div>
+
+            <!-- Area Isi Pesan (Scrollable dengan background khas WA) -->
+            <div id="chat-box" class="flex-1 overflow-y-auto p-4 chat-bg space-y-3">
+                <!-- Pesan akan di-render di sini secara dinamis -->
+            </div>
+
+            <!-- Indikator Mengetik -->
+            <div id="typing-indicator" class="px-4 py-1 text-xs text-gray-500 italic hidden bg-transparent">
+                <span id="typing-text">Seseorang sedang mengetik...</span>
+            </div>
+
+            <!-- Input Bar Bawah -->
+            <div class="bg-gray-100 p-3 flex items-center space-x-2 border-t">
+                <input oninput="handleTyping()" type="text" id="message-input" placeholder="Ketik pesan..." class="flex-1 p-2 px-4 rounded-full border border-gray-300 focus:outline-none focus:border-emerald-500 text-sm">
+                <button onclick="sendMessage()" class="bg-emerald-600 text-white w-9 h-9 rounded-full flex items-center justify-center hover:bg-emerald-700 transition shadow"><i class="fas fa-paper-plane text-sm ml-0.5"></i></button>
+            </div>
+        </div>
+
     </div>
 
+    <!-- Firebase App dan Database SDK Modul Esensial -->
     <script type="module">
-        import { initializeApp } from "https://gstatic.com";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc, query, orderBy, serverTimestamp, updateDoc } from "https://gstatic.com";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+        // Konfigurasi Firebase milik kamu
         const firebaseConfig = {
-            apiKey: "AIzaSyCZHdGHSMBT8g8xs2H78yhDx0dbEv2H0xg",
-            authDomain: "://firebaseapp.com",
-            databaseURL: "https://firebasedatabase.app",
-            projectId: "yowasap",
-            storageBucket: "yowasap.firebasestorage.app",
-            messagingSenderId: "964491262310",
-            appId: "1:964491262310:web:086e5f2cbf0af8398870a7"
-        };
+    apiKey: null, // <-- INI KUNCI NYA. TANPA TANDA KUTIP
+    authDomain: "yowasap.firebaseapp.com",
+    databaseURL: "https://yowasap-default-rtdb.asia-southeast1.firebasedatabase.app/",
+    projectId: "yowasap",
+    storageBucket: "yowasap.firebasestorage.app",
+    messagingSenderId: "964491262310",
+    appId: "1:964491262310:web:086e5f2cbf0af8398870a7"
+};
 
+        // Inisialisasi Firebase
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        const db = getDatabase(app);
 
+        // State Variabel Global Aplikasi
         let currentUser = null;
-        let activeChatUser = null;
+        let currentName = null;
+        let targetUser = null;
         let typingTimeout = null;
 
-        window.loginUser = async () => {
-            const name = document.getElementById('username-input').value.trim();
-            if (!name) return alert('Nama tidak boleh kosong');
+        // Minta Izin Notifikasi Sistem
+        if ("Notification" in window) {
+            Notification.requestPermission();
+        }
 
-            currentUser = {
-                id: name.toLowerCase().replace(/\s+/g, '_'),
-                name: name,
-                avatar: document.getElementById('my-avatar').src,
-                status: 'online',
-                typingTo: null
-            };
+        // Fungsi Login User
+        window.loginAs = function(userId, userName) {
+            currentUser = userId;
+            currentName = userName;
+            targetUser = userId === "User1" ? "User2" : "User1";
 
-            await setDoc(doc(db, "users", currentUser.id), currentUser);
-            document.getElementById('login-screen').style.display = 'none';
-            
-            if (Notification.permission !== "granted") Notification.requestPermission();
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-screen').classList.remove('hidden');
 
-            listenUsers();
-        };
+            // Set Data Profil di Elemen HTML
+            document.getElementById('my-name').innerText = currentName;
+            document.getElementById('chat-header-name').innerText = targetUser === "User1" ? "Andi" : "Budi";
+            document.getElementById('target-name').innerText = targetUser === "User1" ? "Andi" : "Budi";
 
-        function listenUsers() {
-            onSnapshot(collection(db, "users"), (snapshot) => {
-                const usersList = document.getElementById('users-list');
-                usersList.innerHTML = '';
-                snapshot.forEach((docSnap) => {
-                    const user = docSnap.data();
-                    if (user.id === currentUser.id) return;
+            // Pasang status online kita ke Firebase
+            const myStatusRef = ref(db, 'users/' + currentUser);
+            set(myStatusRef, {
+                name: currentName,
+                status: "online",
+                avatar: "https://dicebear.com" + userName
+            });
 
-                    const userEl = document.createElement('div');
-                    userEl.style.display = "flex";
-                    userEl.style.alignItems = "center";
-                    userEl.style.padding = "12px";
-                    userEl.style.borderBottom = "1px solid #eee";
-                    userEl.style.cursor = "pointer";
-                    userEl.style.gap = "10px";
-                    if(activeChatUser?.id === user.id) { userEl.style.backgroundColor = "#e9edef"; }
-                    userEl.onclick = () => selectUserChat(user);
-                    
-                    userEl.innerHTML = `
-                        <div style="position:relative;">
-                            <img src="${user.avatar}" style="width:48px; height:48px; border-radius:50%; object-fit:cover;">
+            // Otomatis ubah status menjadi offline jika tab/browser ditutup
+            onDisconnect(myStatusRef).update({ status: "offline" });
+
+            // Dengarkan perubahan profil dan status user lawan
+            listenTargetUser();
+            // Jalankan sinkronisasi pesan secara real-time
+            listenMessages();
+        }
+                // Fungsi Kirim Pesan
+        window.sendMessage = function() {
+            const input = document.getElementById('message-input');
+            const text = input.value.trim();
+            if (text === '' ||!currentUser) return;
+
+            const chatId = [currentUser, targetUser].sort().join('_'); // biar room nya sama
+            const messagesRef = ref(db, 'messages/' + chatId);
+            push(messagesRef, {
+                sender: currentUser,
+                name: currentName,
+                text: text,
+                timestamp: Date.now()
+            });
+            input.value = '';
+            set(ref(db, 'typing/' + chatId + '/' + currentUser), false); // stop typing
+        }
+
+        // Enter = Kirim
+        document.getElementById('message-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // Fungsi Dengarkan Pesan Real-time
+        window.listenMessages = function() {
+            const chatId = [currentUser, targetUser].sort().join('_');
+            const messagesRef = ref(db, 'messages/' + chatId);
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML = ''; // kosongin dulu
+
+            onValue(messagesRef, (snapshot) => {
+                chatBox.innerHTML = '';
+                snapshot.forEach((child) => {
+                    const msg = child.val();
+                    const isMe = msg.sender === currentUser;
+                    const bubble = document.createElement('div');
+                    bubble.className = `flex ${isMe? 'justify-end' : 'justify-start'}`;
+                    bubble.innerHTML = `
+                        <div class="max-w-xs p-3 rounded-2xl shadow ${isMe? 'bg-emerald-500 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none'}">
+                            <p class="text-sm">${msg.text}</p>
+                        </div>
+                    `;
+                    chatBox.appendChild(bubble);
+                });
+                chatBox.scrollTop = chatBox.scrollHeight; // auto scroll bawah
+            });
+        }
+
+        // Fungsi Cek Status & Typing Lawan
+        window.listenTargetUser = function() {
+            const targetRef = ref(db, 'users/' + targetUser);
+            onValue(targetRef, (snapshot) => {
+                const data = snapshot.val();
+                const status = data? data.status : 'offline';
+                document.getElementById('target-status-badge').innerText = status === 'online'? 'Online' : 'Offline';
+                document.getElementById('chat-header-status').innerText = status === 'online'? 'Online' : 'Offline';
+            });
+
+            const chatId = [currentUser, targetUser].sort().join('_');
+            const typingRef = ref(db, 'typing/' + chatId + '/' + targetUser);
+            onValue(typingRef, (snapshot) => {
+                const isTyping = snapshot.val();
+                document.getElementById('typing-indicator').classList.toggle('hidden',!isTyping);
+            });
+        }
+
+        // Fungsi Indikator Mengetik
+        window.handleTyping = function() {
+            if (!currentUser) return;
+            const chatId = [currentUser, targetUser].sort().join('_');
+            const typingRef = ref(db, 'typing/' + chatId + '/' + currentUser);
+            set(typingRef, true);
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => set(typingRef, false), 2000); // 2 detik ga ngetik = mati
+        }
+
+        // Fungsi Video Call Jitsi
+        window.startVideoCall = function() {
+            if (!currentUser ||!targetUser) return;
+            const roomName = 'Yowasap_' + [currentUser, targetUser].sort().join('_'); // nama room unik
+            const jitsiUrl = `https://meet.jit.si/${roomName}`;
+            window.open(jitsiUrl, '_blank'); // buka di tab baru
+        }
+
+        // Fungsi Logout
+        window.logout = function() {
+            if (currentUser) {
+                set(ref(db, 'users/' + currentUser + '/status'), 'offline');
+            }
+            location.reload(); // balik ke login
+        }
+
+        // Fungsi Ganti Avatar - versi simpel
+        window.changeAvatar = function(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('my-avatar').src = e.target.result;
+                    if(currentUser) set(ref(db, 'users/' + currentUser + '/avatar'), e.target.result);
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+            </script>
+</body>
+</html>
+        
+        
+
