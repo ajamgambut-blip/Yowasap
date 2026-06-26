@@ -1,19 +1,18 @@
-self.addEventListener('install', e => {
-  self.skipWaiting();
+const CACHE_NAME = 'Yowasap-v1';
+const ASSETS = [
+  './',
+  './index.html',
+  'https://tailwindcss.com'
+];
+
+self.addEventListener('install', (e) => {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+  );
 });
 
-self.addEventListener('activate', e => {
-  self.clients.claim();
-});
-
-self.addEventListener('push', event => {
-  const data = event.data ? event.data.json() : {};
-  const title = data.title || 'Lina & Anam';
-  const options = {
-    body: data.body || 'Ada pesan baru 💌',
-    icon: 'icon-192.png',
-    badge: 'icon-152.png',
-    tag: 'chat-lina-anam'
-  };
-  event.waitUntil(self.registration.showNotification(title, options));
+self.addEventListener('fetch', (e) => {
+  e.respondWith(
+    caches.match(e.request).then((res) => res || fetch(e.request))
+  );
 });
