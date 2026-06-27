@@ -331,11 +331,12 @@ onclick="toggleSidebar()"></div>
             const chatId = [currentUser, targetUser].sort().join('_'); // biar room nya sama
             const messagesRef = ref(db, 'messages/' + chatId);
             push(messagesRef, {
-                sender: currentUser,
-                name: currentName,
-                text: text,
-                timestamp: Date.now()
-            });
+    sender: currentUser,
+    name: currentName,
+    text: text,
+    timestamp: Date.now(),
+    read: false
+});
             input.value = '';
             set(ref(db, 'typing/' + chatId + '/' + currentUser), false); // stop typing
         }
