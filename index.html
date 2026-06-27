@@ -393,8 +393,8 @@ onclick="toggleSidebar()"></div>
 // 1. Ambil elemen statusnya
 const presenceStatusEl = document.getElementById('chat-header-status');
 
-// 2. Bikin ref ke status kamu & Lina di Firebase
-const myStatusRef = ref(db, `status/${currentUser.uid}`);
+// 2. Bikin ref ke status kamu & Lina di Firebase. PAKAI currentUser DOANG
+const myStatusRef = ref(db, `status/${currentUser}`);
 const otherStatusRef = ref(db, `status/${targetUser}`);
 const connectedRef = ref(db, '.info/connected');
 
@@ -414,7 +414,7 @@ onValue(connectedRef, (snap) => {
 onValue(otherStatusRef, (snap) => {
     const data = snap.val();
     if (!data) {
-        presenceStatusEl.textContent = 'Offline'; // Kalo belum ada data
+        presenceStatusEl.textContent = 'Offline';
         return;
     }
 
@@ -426,6 +426,7 @@ onValue(otherStatusRef, (snap) => {
         presenceStatusEl.textContent = `Terakhir dilihat ${timeString}`;
     }
 });
+
         // Fungsi Indikator Mengetik
         window.handleTyping = function() {
             if (!currentUser) return;
