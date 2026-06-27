@@ -263,7 +263,7 @@ onclick="toggleSidebar()"></div>
     <!-- Firebase App dan Database SDK Modul Esensial -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, push, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, set, push, onValue, onDisconnect, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         // Konfigurasi Firebase milik kamu
         const firebaseConfig = {
@@ -356,7 +356,14 @@ onclick="toggleSidebar()"></div>
             onValue(messagesRef, (snapshot) => {
                 chatBox.innerHTML = '';
                 snapshot.forEach((child) => {
-                    const msg = child.val();
+    const msg = child.val();
+    const key = child.key;
+                    if (msg.sender !== currentUser && !msg.read) {
+    update(
+        ref(db, "messages/" + chatId + "/" + key),
+        { read: true }
+    );
+}
                     if (
     msg.sender !== currentUser &&
     msg.timestamp > lastSeenTimestamp &&
