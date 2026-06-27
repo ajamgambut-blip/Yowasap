@@ -355,14 +355,24 @@ onclick="toggleSidebar()"></div>
                 chatBox.innerHTML = '';
                 snapshot.forEach((child) => {
                     const msg = child.val();
+                    const jam = new Date(msg.timestamp).toLocaleTimeString("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit"
+});
                     const isMe = msg.sender === currentUser;
                     const bubble = document.createElement('div');
                     bubble.className = `flex ${isMe? 'justify-end' : 'justify-start'}`;
                     bubble.innerHTML = `
-                        <div class="max-w-xs p-3 rounded-2xl shadow ${isMe? 'bg-emerald-500 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none'}">
-                            <p class="text-sm">${msg.text}</p>
-                        </div>
-                    `;
+<div class="max-w-xs p-3 rounded-2xl shadow ${isMe ? 'bg-emerald-500 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none'}">
+
+    <p class="text-sm">${msg.text}</p>
+
+    <div class="text-[10px] mt-1 text-right opacity-70">
+    ${jam} ✓✓
+</div>
+
+</div>
+`;
                     chatBox.appendChild(bubble);
                 });
                 chatBox.scrollTop = chatBox.scrollHeight; // auto scroll bawah
