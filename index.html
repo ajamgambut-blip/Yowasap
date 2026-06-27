@@ -208,7 +208,7 @@ onclick="toggleSidebar()"></div>
 
                     <p id="chat-header-status"
                     class="text-xs text-gray-500">
-                        Offline
+                        Online
                     </p>
 
                 </div>
@@ -390,7 +390,42 @@ onclick="toggleSidebar()"></div>
                 document.getElementById('typing-indicator').classList.toggle('hidden',!isTyping);
             });
         }
+// 1. Ambil elemen statusnya
+const presenceStatusEl = document.getElementById('chat-header-status');
 
+// 2. Bikin ref ke status kamu & Lina di Firebase
+const myStatusRef = ref(db, `status/${currentUser.uid}`);
+const otherStatusRef = ref(db, `status/${targetUser}`);
+const connectedRef = ref(db, '.info/connected');
+
+// 3. Kalo kamu online > set 'online'. Kalo tutup tab > set 'offline' + jam
+onValue(connectedRef, (snap) => {
+    if (snap.val() === false) return; 
+
+    onDisconnect(myStatusRef).set({ 
+        state: 'offline', 
+        lastChanged: serverTimestamp() 
+    }).then(() => {
+        set(myStatusRef, { state: 'online', lastChanged: serverTimestamp() });
+    });
+});
+
+// 4. Dengerin status LINA
+onValue(otherStatusRef, (snap) => {
+    const data = snap.val();
+    if (!data) {
+        presenceStatusEl.textContent = 'Offline'; // Kalo belum ada data
+        return;
+    }
+
+    if (data.state === 'online') {
+        presenceStatusEl.textContent = 'Online';
+    } else {
+        const lastSeenDate = new Date(data.lastChanged * 1000);
+        const timeString = lastSeenDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        presenceStatusEl.textContent = `Terakhir dilihat ${timeString}`;
+    }
+});
         // Fungsi Indikator Mengetik
         window.handleTyping = function() {
             if (!currentUser) return;
