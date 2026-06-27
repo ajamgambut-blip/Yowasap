@@ -239,33 +239,27 @@ onclick="toggleSidebar()"></div>
         <!-- INPUT -->
         <div class="bg-gray-100 border-t p-3 flex gap-2">
 
-    <!-- INPUT TEKS -->
-    <input
-        id="message-input"
-        type="text"
-        oninput="handleTyping()"
-        placeholder="Ketik pesan..."
-        class="flex-1 border rounded-full px-4 py-2">
+            <input
+            id="message-input"
+            type="text"
+            oninput="handleTyping()"
+            placeholder="Ketik pesan..."
+            class="flex-1 border rounded-full px-4 py-2">
 
-    <!-- TOMBOL FOTO -->
-    <button
-        onclick="document.getElementById('imgInput').click()"
-        class="bg-gray-500 text-white w-11 h-11 rounded-full">
+            <button
+            onclick="sendMessage()"
+            class="bg-emerald-600 text-white w-11 h-11 rounded-full">
 
-        📷
-    </button>
+                <i class="fas fa-paper-plane"></i>
 
-    <!-- TOMBOL KIRIM -->
-    <button
-        onclick="sendMessage()"
-        class="bg-emerald-600 text-white w-11 h-11 rounded-full">
+            </button>
 
-        <i class="fas fa-paper-plane"></i>
-    </button>
+        </div>
+
+    </div>
 
 </div>
-        <input type="file" id="imgInput" accept="image/*" hidden>
-        
+
     <!-- Firebase App dan Database SDK Modul Esensial -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -394,16 +388,15 @@ if (msg.timestamp > lastSeenTimestamp) {
                     bubble.innerHTML = `
 <div class="max-w-xs p-3 rounded-2xl shadow ${isMe ? 'bg-emerald-500 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none'}">
 
-    ${msg.text ? `<p class="text-sm">${msg.text}</p>` : ""}
-
-    ${msg.imageUrl ? `
-        <img src="${msg.imageUrl}"
-             class="mt-2 rounded-lg max-w-full" />
-    ` : ""}
+    <p class="text-sm">${msg.text}</p>
 
     <div class="text-[10px] mt-1 text-right opacity-70">
-        ${jam} ${isMe ? (msg.read ? "✓✓" : "✓") : ""}
-    </div>
+    ${jam} ${
+    isMe
+        ? (msg.read ? "✓✓" : "✓")
+        : ""
+}
+</div>
 
 </div>
 `;
@@ -503,50 +496,8 @@ onValue(typingRef, (snapshot) => {
     sidebar.classList.toggle("-translate-x-full");
     overlay.classList.toggle("hidden");
 
-}   
-       async function sendImageSimple(file) {
-  const img = new Image();
-  img.src = URL.createObjectURL(file);
-
-  await new Promise(res => img.onload = res);
-
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-
-  const maxWidth = 1280;
-  const scale = maxWidth / img.width;
-
-  canvas.width = maxWidth;
-  canvas.height = img.height * scale;
-
-  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-  const blob = await new Promise(resolve =>
-    canvas.toBlob(resolve, "image/jpeg", 0.7)
-  );
-
-  // upload ke Firebase Storage
-  const fileRef = ref(storage, "chat/" + Date.now() + ".jpg");
-  await uploadBytes(fileRef, blob);
-
-  const url = await getDownloadURL(fileRef);
-
-  // simpan ke database chat
-  await push(msgRef, {
-    user: user,
-    text: "",
-    imageUrl: url,
-    time: Date.now()
-  });
-} 
-        <input type="file" id="imgInput" accept="image/*" hidden onchange="handleImageSelect(event)">
-   function handleImageSelect(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  sendImageSimple(file);
-}
-            </script>
+}       
+    </script>
 </body>
 </html>
         
