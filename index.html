@@ -427,12 +427,15 @@ if (status === "online") {
 
             const chatId = [currentUser, targetUser].sort().join('_');
             const typingRef = ref(db, 'typing/' + chatId + '/' + targetUser);
-            onValue(typingRef, (snapshot) => {
-                const isTyping = snapshot.val();
-                document.getElementById('typing-indicator').classList.toggle('hidden',!isTyping);
-            });
-        }
+onValue(typingRef, (snapshot) => {
+    const isTyping = snapshot.val();
+    document.getElementById('typing-indicator').classList.toggle('hidden', !isTyping);
+});
 
+}); // menutup onValue(targetRef)
+
+}; // menutup window.listenTargetUser
+        
         // Fungsi Indikator Mengetik
         window.handleTyping = function() {
             if (!currentUser) return;
