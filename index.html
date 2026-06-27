@@ -399,10 +399,31 @@ if (msg.timestamp > lastSeenTimestamp) {
             const targetRef = ref(db, 'users/' + targetUser);
             onValue(targetRef, (snapshot) => {
                 const data = snapshot.val();
-                const status = data? data.status : 'offline';
-                document.getElementById('target-status-badge').innerText = status === 'online'? 'Online' : 'Offline';
-                document.getElementById('chat-header-status').innerText = status === 'online'? 'Online' : 'Offline';
-            });
+                const status = data ? data.status : "offline";
+
+if (status === "online") {
+
+    document.getElementById("target-status-badge").innerText = "Online";
+    document.getElementById("chat-header-status").innerText = "Online";
+
+} else {
+
+    let text = "Offline";
+
+    if (data && data.lastSeen) {
+
+        const jam = new Date(data.lastSeen).toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+
+        text = "Terakhir dilihat " + jam;
+    }
+
+    document.getElementById("target-status-badge").innerText = text;
+    document.getElementById("chat-header-status").innerText = text;
+
+}
 
             const chatId = [currentUser, targetUser].sort().join('_');
             const typingRef = ref(db, 'typing/' + chatId + '/' + targetUser);
@@ -432,12 +453,15 @@ if (msg.timestamp > lastSeenTimestamp) {
 
         // Fungsi Logout
         window.logout = function() {
-            if (currentUser) {
-                set(ref(db, 'users/' + currentUser + '/status'), 'offline');
-            }
-            location.reload(); // balik ke login
-        }
-
+    if (currentUser) {
+        set(ref(db, 'users/' + currentUser), {
+            name: currentName,
+            status: "offline",
+            lastSeen: Date.now()
+        });
+    }
+    location.reload();
+}
         // Fungsi Ganti Avatar - versi simpel
         window.changeAvatar = function(input) {
             if (input.files && input.files[0]) {
