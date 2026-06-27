@@ -285,6 +285,7 @@ onclick="toggleSidebar()"></div>
         let currentName = null;
         let targetUser = null;
         let typingTimeout = null;
+        let lastSeenTimestamp = 0;
 
         // Minta Izin Notifikasi Sistem
         if ("Notification" in window) {
@@ -355,6 +356,20 @@ onclick="toggleSidebar()"></div>
                 chatBox.innerHTML = '';
                 snapshot.forEach((child) => {
                     const msg = child.val();
+                    if (
+    msg.sender !== currentUser &&
+    msg.timestamp > lastSeenTimestamp &&
+    Notification.permission === "granted"
+) {
+    new Notification("Yowasap", {
+        body: `${msg.name}: ${msg.text}`
+    });
+}
+
+if (msg.timestamp > lastSeenTimestamp) {
+    lastSeenTimestamp = msg.timestamp;
+}
+
                     const jam = new Date(msg.timestamp).toLocaleTimeString("id-ID", {
     hour: "2-digit",
     minute: "2-digit"
