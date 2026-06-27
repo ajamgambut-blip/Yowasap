@@ -539,13 +539,14 @@ onValue(typingRef, (snapshot) => {
     time: Date.now()
   });
 } 
-        document.getElementById("imgInput").addEventListener("change", async (e) => {
+        <input type="file" id="imgInput" accept="image/*" hidden onchange="handleImageSelect(event)">
+   function handleImageSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
 
-  await sendImageSimple(file);
-});
-    </script>
+  sendImageSimple(file);
+}
+            </script>
 </body>
 </html>
         
